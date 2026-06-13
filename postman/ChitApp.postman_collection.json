@@ -214,6 +214,35 @@
       ]
     },
     {
+      "name": "Collections",
+      "item": [
+        {
+          "name": "Membership Installment Schedule",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/memberships/1/installments", "host": ["{{baseUrl}}"], "path": ["memberships", "1", "installments"] }
+          }
+        },
+        {
+          "name": "Customer Collection History",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/customers/1/history", "host": ["{{baseUrl}}"], "path": ["customers", "1", "history"] }
+          }
+        },
+        {
+          "name": "Customer Pending Amount",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/customers/1/pending", "host": ["{{baseUrl}}"], "path": ["customers", "1", "pending"] }
+          }
+        }
+      ]
+    },
+    {
       "name": "Health",
       "request": {
         "method": "GET",
