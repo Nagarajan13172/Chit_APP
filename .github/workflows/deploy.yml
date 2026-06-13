@@ -22,20 +22,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Copy project to VPS
+      - name: Package project (source only)
+        run: tar czf deploy.tar.gz backend frontend docker-compose.prod.yml
+
+      - name: Copy bundle to VPS
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           password: ${{ secrets.VPS_PASS }}
-          source: |
-            backend
-            frontend
-            docker-compose.prod.yml
+          source: deploy.tar.gz
           target: ${{ env.DEPLOY_DIR }}
           overwrite: true
 
-      - name: Build & start Postgres + backend, migrate, health-check
+      - name: Unpack, build & start Postgres + backend, migrate, health-check
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -45,6 +45,9 @@ jobs:
           script: |
             set -e
             cd ~/${{ env.DEPLOY_DIR }}
+
+            echo "→ Unpacking project"
+            tar xzf deploy.tar.gz && rm -f deploy.tar.gz
 
             echo "→ Writing production.env from the ENV secret"
             cat > production.env <<'CHIT_ENV_EOF'
@@ -58,7 +61,7 @@ jobs:
             ${{ env.COMPOSE }} exec -T backend npx prisma migrate status
 
             echo "→ Backend health check (/api/health)"
-            ${{ env.COMPOSE }} exec -T backend node -e "require('http').get('http://localhost:4000/api/health',r=>{let d='';r.on('data',c=>d+=c);r.on('end',()=>{console.log('  health:',d);process.exit(r.statusCode===200?0:1)})}).on('error',e=>{console.error(e.message);process.exit(1)})"
+            ${{ env.COMPOSE }} exec -T backend node -e "require('http').get('http://127.0.0.1:4000/api/health',r=>{let d='';r.on('data',c=>d+=c);r.on('end',()=>{console.log('  health:',d);process.exit(r.statusCode===200?0:1)})}).on('error',e=>{console.error(e.message);process.exit(1)})"
 
             echo "✅ Backend deployed and healthy"
 
