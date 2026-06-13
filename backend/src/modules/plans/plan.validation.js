@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { blankToUndefined } from "../../utils/zodHelpers.js";
 
 const money = (label) =>
   z
@@ -18,12 +19,12 @@ export const createPlanSchema = z.object({
 });
 
 export const listPlansQuerySchema = z.object({
-  page: z.coerce.number().int().min(1).default(1),
-  limit: z.coerce.number().int().min(1).max(100).default(10),
-  search: z.string().trim().optional(),
-  status: z.enum(["ACTIVE", "CLOSED"]).optional(),
-  sortBy: z.enum(["name", "startDate", "createdAt"]).default("createdAt"),
-  sortOrder: z.enum(["asc", "desc"]).default("desc"),
+  page: blankToUndefined(z.coerce.number().int().min(1).default(1)),
+  limit: blankToUndefined(z.coerce.number().int().min(1).max(100).default(10)),
+  search: blankToUndefined(z.string().trim().optional()),
+  status: blankToUndefined(z.enum(["ACTIVE", "CLOSED"]).optional()),
+  sortBy: blankToUndefined(z.enum(["name", "startDate", "createdAt"]).default("createdAt")),
+  sortOrder: blankToUndefined(z.enum(["asc", "desc"]).default("desc")),
 });
 
 export const assignMemberSchema = z.object({

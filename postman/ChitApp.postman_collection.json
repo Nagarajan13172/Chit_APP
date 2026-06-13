@@ -225,7 +225,7 @@
               { "key": "Content-Type", "value": "application/json" }
             ],
             "url": { "raw": "{{baseUrl}}/payments", "host": ["{{baseUrl}}"], "path": ["payments"] },
-            "body": { "mode": "raw", "raw": "{\n  \"installmentId\": 1,\n  \"amount\": 20833.33,\n  \"lateFee\": 0,\n  \"mode\": \"CASH\",\n  \"notes\": \"Monthly collection\"\n}" }
+            "body": { "mode": "raw", "raw": "{\n  \"installmentId\": 3,\n  \"amount\": 20833.33,\n  \"lateFee\": 0,\n  \"mode\": \"CASH\",\n  \"notes\": \"Monthly collection\"\n}" }
           }
         },
         {
@@ -237,7 +237,7 @@
               { "key": "Content-Type", "value": "application/json" }
             ],
             "url": { "raw": "{{baseUrl}}/payments", "host": ["{{baseUrl}}"], "path": ["payments"] },
-            "body": { "mode": "raw", "raw": "{\n  \"installmentId\": 2,\n  \"amount\": 20833.33,\n  \"mode\": \"UPI\",\n  \"referenceNumber\": \"UPI-TXN-12345\"\n}" }
+            "body": { "mode": "raw", "raw": "{\n  \"installmentId\": 4,\n  \"amount\": 20833.33,\n  \"mode\": \"UPI\",\n  \"referenceNumber\": \"UPI-TXN-12345\"\n}" }
           }
         },
         {

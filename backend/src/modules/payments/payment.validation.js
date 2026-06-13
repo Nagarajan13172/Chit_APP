@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { blankToUndefined } from "../../utils/zodHelpers.js";
 
 // True when n has at most 2 decimal places (a representable currency amount).
 const isTwoDecimals = (n) => Math.abs(n * 100 - Math.round(n * 100)) < 1e-9;
@@ -32,23 +33,25 @@ export const createPaymentSchema = z
   });
 
 export const listPaymentsQuerySchema = z.object({
-  page: z.coerce.number().int().min(1).default(1),
-  limit: z.coerce.number().int().min(1).max(100).default(10),
-  mode: z.enum(["CASH", "UPI", "CHEQUE"]).optional(),
-  customerId: z.coerce.number().int().positive().optional(),
-  membershipId: z.coerce.number().int().positive().optional(),
-  from: z.coerce.date().optional(),
+  page: blankToUndefined(z.coerce.number().int().min(1).default(1)),
+  limit: blankToUndefined(z.coerce.number().int().min(1).max(100).default(10)),
+  mode: blankToUndefined(z.enum(["CASH", "UPI", "CHEQUE"]).optional()),
+  customerId: blankToUndefined(z.coerce.number().int().positive().optional()),
+  membershipId: blankToUndefined(z.coerce.number().int().positive().optional()),
+  from: blankToUndefined(z.coerce.date().optional()),
   // Make a date-only `to` inclusive of the whole day (paidAt is a timestamp, not a date).
-  to: z
-    .coerce.date()
-    .optional()
-    .transform((d) => {
-      if (!d) return d;
-      const end = new Date(d);
-      end.setUTCHours(23, 59, 59, 999);
-      return end;
-    }),
-  sortOrder: z.enum(["asc", "desc"]).default("desc"),
+  to: blankToUndefined(
+    z.coerce
+      .date()
+      .optional()
+      .transform((d) => {
+        if (!d) return d;
+        const end = new Date(d);
+        end.setUTCHours(23, 59, 59, 999);
+        return end;
+      })
+  ),
+  sortOrder: blankToUndefined(z.enum(["asc", "desc"]).default("desc")),
 });
 
 export const idParamSchema = z.object({

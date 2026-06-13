@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { blankToUndefined } from "../../utils/zodHelpers.js";
 
 const phoneRegex = /^\d{10}$/;
 
@@ -32,12 +33,12 @@ export const updateCustomerSchema = createCustomerSchema
   .refine((obj) => Object.keys(obj).length > 0, { message: "At least one field must be provided" });
 
 export const listQuerySchema = z.object({
-  page: z.coerce.number().int().min(1).default(1),
-  limit: z.coerce.number().int().min(1).max(100).default(10),
-  search: z.string().trim().optional(),
-  area: z.string().trim().optional(),
-  sortBy: z.enum(["name", "phone", "createdAt"]).default("createdAt"),
-  sortOrder: z.enum(["asc", "desc"]).default("desc"),
+  page: blankToUndefined(z.coerce.number().int().min(1).default(1)),
+  limit: blankToUndefined(z.coerce.number().int().min(1).max(100).default(10)),
+  search: blankToUndefined(z.string().trim().optional()),
+  area: blankToUndefined(z.string().trim().optional()),
+  sortBy: blankToUndefined(z.enum(["name", "phone", "createdAt"]).default("createdAt")),
+  sortOrder: blankToUndefined(z.enum(["asc", "desc"]).default("desc")),
 });
 
 export const searchQuerySchema = z.object({
