@@ -8,6 +8,7 @@ import { CustomersPage } from "@/pages/customers-page";
 import { DashboardPage } from "@/pages/dashboard-page";
 import { LoginPage } from "@/pages/login-page";
 import { NotFoundPage } from "@/pages/not-found-page";
+import { PlanDetailPage } from "@/pages/plan-detail-page";
 import { PlansPage } from "@/pages/plans-page";
 import { ReportsPage } from "@/pages/reports-page";
 
@@ -23,6 +24,7 @@ const router = createBrowserRouter([
           { path: "customers", element: <CustomersPage /> },
           { path: "customers/:id", element: <CustomerDetailPage /> },
           { path: "plans", element: <PlansPage /> },
+          { path: "plans/:id", element: <PlanDetailPage /> },
           { path: "collections", element: <CollectionsPage /> },
           // Admin-only section.
           {

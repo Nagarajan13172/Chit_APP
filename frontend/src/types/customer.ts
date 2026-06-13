@@ -1,4 +1,7 @@
 /** Customer domain types, mirroring the backend Customer model + list contract. */
+import type { ListResponse, PaginationMeta, SortOrder } from "./common";
+
+export type { PaginationMeta, SortOrder };
 
 export interface Customer {
   id: number;
@@ -14,22 +17,10 @@ export interface Customer {
   _count?: { memberships: number };
 }
 
-export interface PaginationMeta {
-  page: number;
-  limit: number;
-  total: number;
-  totalPages: number;
-}
-
 /** GET /customers returns `data` + a sibling `pagination` (not nested). */
-export interface CustomerListResponse {
-  success: true;
-  data: Customer[];
-  pagination: PaginationMeta;
-}
+export type CustomerListResponse = ListResponse<Customer>;
 
 export type CustomerSortBy = "name" | "phone" | "createdAt";
-export type SortOrder = "asc" | "desc";
 
 export interface CustomerListParams {
   page?: number;
