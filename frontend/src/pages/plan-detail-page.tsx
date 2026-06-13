@@ -1,15 +1,25 @@
-import { ArrowLeft, Plus } from "lucide-react";
+import { ArrowLeft, Loader2, Lock, LockOpen, Plus } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { Link, useParams } from "react-router-dom";
 import { RoleGuard } from "@/components/auth/role-guard";
 import { PageHeader } from "@/components/common/page-header";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AssignMemberDialog } from "@/features/plans/assign-member-dialog";
 import { PlanMembersTable } from "@/features/plans/plan-members-table";
-import { usePlan, usePlanMembers } from "@/features/plans/queries";
+import { usePlan, usePlanMembers, useUpdatePlanStatus } from "@/features/plans/queries";
 import { PlanStatusBadge } from "@/features/plans/status-badges";
 import { formatCurrency, formatDate } from "@/lib/format";
 
@@ -29,6 +39,8 @@ export function PlanDetailPage() {
   const membersQuery = usePlanMembers(planId);
   const members = membersQuery.data ?? [];
   const [assignOpen, setAssignOpen] = useState(false);
+  const [statusDialogOpen, setStatusDialogOpen] = useState(false);
+  const statusMutation = useUpdatePlanStatus(planId);
 
   const backButton = (
     <Button asChild variant="ghost" size="sm" className="mb-2 -ml-2 w-fit text-muted-foreground">
@@ -76,12 +88,32 @@ export function PlanDetailPage() {
     plan.totalMembers > 0 ? Math.min(100, Math.round((memberCount / plan.totalMembers) * 100)) : 0;
   const isClosed = plan.status !== "ACTIVE";
   const isFull = memberCount >= plan.totalMembers;
+  const nextStatus = plan.status === "ACTIVE" ? "CLOSED" : "ACTIVE";
 
   return (
     <div>
       {backButton}
       <PageHeader title={plan.name} description={`Plan #${plan.id}`}>
         <PlanStatusBadge status={plan.status} />
+        <RoleGuard roles={["ADMIN"]}>
+          <Button
+            variant="outline"
+            onClick={() => setStatusDialogOpen(true)}
+            disabled={statusMutation.isPending}
+          >
+            {plan.status === "ACTIVE" ? (
+              <>
+                <Lock className="size-4" />
+                Close plan
+              </>
+            ) : (
+              <>
+                <LockOpen className="size-4" />
+                Reopen
+              </>
+            )}
+          </Button>
+        </RoleGuard>
       </PageHeader>
 
       <Card>
@@ -132,6 +164,34 @@ export function PlanDetailPage() {
         plan={plan}
         members={members}
       />
+
+      <AlertDialog open={statusDialogOpen} onOpenChange={setStatusDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {plan.status === "ACTIVE" ? "Close this plan?" : "Reopen this plan?"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {plan.status === "ACTIVE"
+                ? "Closing stops new member assignments and payment collection for this plan. You can reopen it anytime."
+                : "Reopening allows member assignments and payment collection again."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={statusMutation.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(event) => {
+                event.preventDefault();
+                statusMutation.mutate(nextStatus, { onSuccess: () => setStatusDialogOpen(false) });
+              }}
+              disabled={statusMutation.isPending}
+            >
+              {statusMutation.isPending ? <Loader2 className="size-4 animate-spin" /> : null}
+              {plan.status === "ACTIVE" ? "Close plan" : "Reopen"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

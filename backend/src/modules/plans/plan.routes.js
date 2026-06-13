@@ -4,6 +4,7 @@ import {
   createPlanSchema,
   listPlansQuerySchema,
   assignMemberSchema,
+  updatePlanStatusSchema,
   idParamSchema,
 } from "./plan.validation.js";
 import { validate } from "../../middleware/validate.js";
@@ -27,6 +28,15 @@ router.post(
   validate(idParamSchema, "params"),
   validate(assignMemberSchema),
   planController.assignMember
+);
+
+// Close / reopen a plan — ADMIN only
+router.patch(
+  "/:id/status",
+  authorize("ADMIN"),
+  validate(idParamSchema, "params"),
+  validate(updatePlanStatusSchema),
+  planController.updateStatus
 );
 
 export default router;

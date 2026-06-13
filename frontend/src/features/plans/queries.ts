@@ -3,7 +3,7 @@ import { toast } from "sonner";
 import * as plansApi from "@/api/plans.api";
 import { getApiErrorMessage } from "@/api/client";
 import { customerKeys } from "@/features/customers/queries";
-import type { AssignMemberPayload, PlanListParams, PlanPayload } from "@/types/plan";
+import type { AssignMemberPayload, PlanListParams, PlanPayload, PlanStatus } from "@/types/plan";
 
 export const planKeys = {
   all: ["plans"] as const,
@@ -58,6 +58,18 @@ export function useCreatePlan() {
       toast.success(`Plan "${plan.name}" created`);
     },
     onError: (error) => toast.error(getApiErrorMessage(error, "Failed to create plan")),
+  });
+}
+
+export function useUpdatePlanStatus(planId: number) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (status: PlanStatus) => plansApi.updatePlanStatus(planId, status),
+    onSuccess: (plan) => {
+      queryClient.invalidateQueries({ queryKey: planKeys.all });
+      toast.success(plan.status === "CLOSED" ? `Plan "${plan.name}" closed` : `Plan "${plan.name}" reopened`);
+    },
+    onError: (error) => toast.error(getApiErrorMessage(error, "Failed to update plan status")),
   });
 }
 

@@ -43,6 +43,17 @@ export async function listPlans({ page, limit, search, status, sortBy, sortOrder
   };
 }
 
+/** Set a plan's lifecycle status (ACTIVE/CLOSED). Idempotent. */
+export async function updatePlanStatus(id, status) {
+  const existing = await prisma.chitPlan.findUnique({ where: { id } });
+  if (!existing) throw ApiError.notFound("Chit plan not found");
+  return prisma.chitPlan.update({
+    where: { id },
+    data: { status },
+    include: { _count: { select: { memberships: true } } },
+  });
+}
+
 export async function getPlanById(id) {
   const plan = await prisma.chitPlan.findUnique({
     where: { id },

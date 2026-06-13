@@ -16,6 +16,12 @@ export const getById = asyncHandler(async (req, res) => {
   res.json({ success: true, data: plan });
 });
 
+export const updateStatus = asyncHandler(async (req, res) => {
+  const plan = await planService.updatePlanStatus(req.params.id, req.body.status);
+  const verb = req.body.status === "CLOSED" ? "closed" : "reopened";
+  res.json({ success: true, message: `Chit plan ${verb}`, data: plan });
+});
+
 export const assignMember = asyncHandler(async (req, res) => {
   const membership = await planService.assignMember(req.params.id, req.body);
   res.status(201).json({ success: true, message: "Customer assigned to plan", data: membership });

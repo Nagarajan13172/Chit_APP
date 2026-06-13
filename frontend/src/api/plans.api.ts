@@ -8,6 +8,7 @@ import type {
   PlanListResponse,
   PlanMember,
   PlanPayload,
+  PlanStatus,
 } from "@/types/plan";
 
 /** GET /plans — paginated, filterable, sortable list. */
@@ -31,6 +32,12 @@ export async function listPlanMembers(id: number): Promise<PlanMember[]> {
 /** POST /plans — create a plan (ADMIN only). */
 export async function createPlan(payload: PlanPayload): Promise<ChitPlan> {
   const { data } = await api.post<ApiSuccess<ChitPlan>>("/plans", payload);
+  return data.data;
+}
+
+/** PATCH /plans/:id/status — close or reopen a plan (ADMIN only). */
+export async function updatePlanStatus(id: number, status: PlanStatus): Promise<ChitPlan> {
+  const { data } = await api.patch<ApiSuccess<ChitPlan>>(`/plans/${id}/status`, { status });
   return data.data;
 }
 

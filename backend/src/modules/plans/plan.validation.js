@@ -32,6 +32,10 @@ export const assignMemberSchema = z.object({
   ticketNumber: z.coerce.number().int().positive().optional(),
 });
 
+export const updatePlanStatusSchema = z.object({
+  status: z.enum(["ACTIVE", "CLOSED"]),
+});
+
 export const idParamSchema = z.object({
   id: z.coerce.number().int().positive("Invalid id"),
 });
