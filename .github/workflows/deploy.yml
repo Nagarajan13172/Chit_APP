@@ -1,0 +1,98 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  DEPLOY_DIR: chit-app # relative to the VPS user's home
+  COMPOSE: docker compose -f docker-compose.prod.yml --env-file production.env
+
+jobs:
+  # ── 1) Backend first: ship code, bring up DB + API, run migrations, verify ──
+  deploy-backend:
+    name: Deploy backend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Copy project to VPS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          password: ${{ secrets.VPS_PASS }}
+          source: |
+            backend
+            frontend
+            docker-compose.prod.yml
+          target: ${{ env.DEPLOY_DIR }}
+          overwrite: true
+
+      - name: Build & start Postgres + backend, migrate, health-check
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          password: ${{ secrets.VPS_PASS }}
+          command_timeout: 20m
+          script: |
+            set -e
+            cd ~/${{ env.DEPLOY_DIR }}
+
+            echo "→ Writing production.env from the ENV secret"
+            cat > production.env <<'CHIT_ENV_EOF'
+            ${{ secrets.ENV }}
+            CHIT_ENV_EOF
+
+            echo "→ Building & starting postgres + backend"
+            ${{ env.COMPOSE }} up -d --build --wait postgres backend
+
+            echo "→ Verifying database migrations are applied"
+            ${{ env.COMPOSE }} exec -T backend npx prisma migrate status
+
+            echo "→ Backend health check (/api/health)"
+            ${{ env.COMPOSE }} exec -T backend node -e "require('http').get('http://localhost:4000/api/health',r=>{let d='';r.on('data',c=>d+=c);r.on('end',()=>{console.log('  health:',d);process.exit(r.statusCode===200?0:1)})}).on('error',e=>{console.error(e.message);process.exit(1)})"
+
+            echo "✅ Backend deployed and healthy"
+
+  # ── 2) Frontend + Traefik: build & serve, then confirm the request reaches the API ──
+  deploy-frontend:
+    name: Deploy frontend
+    needs: deploy-backend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build & start Traefik + frontend, verify request path
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          password: ${{ secrets.VPS_PASS }}
+          command_timeout: 20m
+          script: |
+            set -e
+            cd ~/${{ env.DEPLOY_DIR }}
+
+            DOMAIN=$(grep -E '^DOMAIN=' production.env | cut -d= -f2 | tr -d '"')
+
+            echo "→ Building & starting Traefik + frontend"
+            ${{ env.COMPOSE }} up -d --build --wait traefik frontend
+
+            # Hit Traefik on 443 with the right Host/SNI. -k tolerates the brief
+            # window before the Let's Encrypt cert finishes issuing.
+            echo "→ Frontend serves the app (via Traefik)"
+            curl -fsS -k --resolve "${DOMAIN}:443:127.0.0.1" "https://${DOMAIN}/" -o /dev/null && echo "  site OK"
+
+            echo "→ Request reaches the API through Traefik (/api/health)"
+            curl -fsS -k --resolve "${DOMAIN}:443:127.0.0.1" "https://${DOMAIN}/api/health" && echo "" && echo "  api-via-traefik OK"
+
+            echo "→ Running containers:"
+            ${{ env.COMPOSE }} ps
+
+            echo "✅ Deployed — https://${DOMAIN}"
