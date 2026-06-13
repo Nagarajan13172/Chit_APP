@@ -75,19 +75,28 @@
   }
 }
 
-/* Print only the receipt body (everything else is hidden). */
+/* Thermal-style receipt printing: hide the app, print only the 80mm receipt roll. */
+.thermal-print {
+  display: none;
+}
+
 @media print {
-  body * {
-    visibility: hidden;
+  @page {
+    size: 80mm auto;
+    margin: 0;
   }
-  .print-area,
-  .print-area * {
-    visibility: visible;
+  html,
+  body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
   }
-  .print-area {
-    position: absolute;
-    inset: 0;
-    margin: 1rem;
-    border: none !important;
+  body > * {
+    display: none !important;
+  }
+  .thermal-print {
+    display: block !important;
+    width: 80mm;
+    color: #000;
   }
 }

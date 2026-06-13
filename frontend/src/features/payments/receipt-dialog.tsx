@@ -11,6 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { formatCurrency, formatDate } from "@/lib/format";
 import type { Receipt } from "@/types/payment";
 import { PaymentModeBadge } from "./payment-mode-badge";
+import { ThermalReceipt } from "./thermal-receipt";
 import { useReceipt } from "./queries";
 
 interface ReceiptDialogProps {
@@ -54,7 +55,7 @@ export function ReceiptDialog({ open, onOpenChange, receipt: receiptProp, paymen
             )}
           </div>
         ) : (
-          <div className="print-area space-y-3 rounded-md border p-4">
+          <div className="space-y-3 rounded-md border p-4">
             <div className="flex items-start justify-between">
               <div>
                 <p className="font-mono text-sm font-semibold">{receipt.receiptNumber}</p>
@@ -101,6 +102,9 @@ export function ReceiptDialog({ open, onOpenChange, receipt: receiptProp, paymen
           ) : null}
         </DialogFooter>
       </DialogContent>
+
+      {/* Hidden 80mm thermal receipt — the only thing that prints. */}
+      {open && receipt ? <ThermalReceipt receipt={receipt} /> : null}
     </Dialog>
   );
 }
