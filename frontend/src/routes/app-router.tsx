@@ -3,6 +3,7 @@ import { ProtectedRoute } from "@/components/auth/protected-route";
 import { RoleRoute } from "@/components/auth/role-route";
 import { AppLayout } from "@/components/layout/app-layout";
 import { CollectionsPage } from "@/pages/collections-page";
+import { CustomerDetailPage } from "@/pages/customer-detail-page";
 import { CustomersPage } from "@/pages/customers-page";
 import { DashboardPage } from "@/pages/dashboard-page";
 import { LoginPage } from "@/pages/login-page";
@@ -20,6 +21,7 @@ const router = createBrowserRouter([
         children: [
           { index: true, element: <DashboardPage /> },
           { path: "customers", element: <CustomersPage /> },
+          { path: "customers/:id", element: <CustomerDetailPage /> },
           { path: "plans", element: <PlansPage /> },
           { path: "collections", element: <CollectionsPage /> },
           // Admin-only section.
