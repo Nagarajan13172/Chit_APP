@@ -1,5 +1,6 @@
 import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
+import { ErrorState } from "@/components/common/error-state";
 import { PageHeader } from "@/components/common/page-header";
 import { StatCard } from "@/components/common/stat-card";
 import { Button } from "@/components/ui/button";
@@ -31,7 +32,14 @@ export function DashboardPage() {
       />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {summaryQuery.isLoading || !summary ? (
+        {summaryQuery.isError ? (
+          <div className="sm:col-span-2 lg:col-span-3">
+            <ErrorState
+              message="Couldn't load dashboard metrics."
+              onRetry={() => summaryQuery.refetch()}
+            />
+          </div>
+        ) : summaryQuery.isLoading || !summary ? (
           Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-24 w-full" />)
         ) : (
           <>
@@ -70,7 +78,12 @@ export function DashboardPage() {
             <CardTitle className="text-base">Collections by mode</CardTitle>
           </CardHeader>
           <CardContent>
-            {collectionsQuery.isLoading || !collections ? (
+            {collectionsQuery.isError ? (
+              <ErrorState
+                message="Couldn't load chart data."
+                onRetry={() => collectionsQuery.refetch()}
+              />
+            ) : collectionsQuery.isLoading || !collections ? (
               <Skeleton className="h-64 w-full" />
             ) : (
               <CollectionsByModeChart data={collections.byMode} />
@@ -83,7 +96,12 @@ export function DashboardPage() {
             <CardTitle className="text-base">Top plans by collection</CardTitle>
           </CardHeader>
           <CardContent>
-            {collectionsQuery.isLoading || !collections ? (
+            {collectionsQuery.isError ? (
+              <ErrorState
+                message="Couldn't load chart data."
+                onRetry={() => collectionsQuery.refetch()}
+              />
+            ) : collectionsQuery.isLoading || !collections ? (
               <Skeleton className="h-64 w-full" />
             ) : (
               <CollectionsByPlanChart data={collections.byPlan} />

@@ -74,3 +74,20 @@
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
+
+/* Print only the receipt body (everything else is hidden). */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .print-area,
+  .print-area * {
+    visibility: visible;
+  }
+  .print-area {
+    position: absolute;
+    inset: 0;
+    margin: 1rem;
+    border: none !important;
+  }
+}

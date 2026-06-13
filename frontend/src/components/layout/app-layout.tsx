@@ -1,5 +1,6 @@
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import { Outlet, useLocation } from "react-router-dom";
+import { PageLoader } from "@/components/common/page-loader";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { titleForPath } from "@/config/nav";
 import { AppSidebar } from "./app-sidebar";
@@ -20,7 +21,9 @@ export function AppLayout() {
       <SidebarInset>
         <AppTopbar />
         <main className="flex-1 p-4 md:p-6">
-          <Outlet />
+          <Suspense fallback={<PageLoader />}>
+            <Outlet />
+          </Suspense>
         </main>
       </SidebarInset>
     </SidebarProvider>

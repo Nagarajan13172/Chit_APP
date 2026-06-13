@@ -54,7 +54,7 @@ export function ReceiptDialog({ open, onOpenChange, receipt: receiptProp, paymen
             )}
           </div>
         ) : (
-          <div className="space-y-3 rounded-md border p-4">
+          <div className="print-area space-y-3 rounded-md border p-4">
             <div className="flex items-start justify-between">
               <div>
                 <p className="font-mono text-sm font-semibold">{receipt.receiptNumber}</p>
