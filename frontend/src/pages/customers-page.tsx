@@ -1,6 +1,6 @@
 import { Download, Plus, Search } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { Outlet, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { listCustomers } from "@/api/customers.api";
 import { getApiErrorMessage } from "@/api/client";
 import { DataPagination } from "@/components/common/data-pagination";
@@ -43,6 +43,12 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 export function CustomersPage() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // Open the detail sheet (nested /customers/:id) without losing list filters.
+  const openView = (id: number) =>
+    navigate({ pathname: `/customers/${id}`, search: location.search });
 
   const search = searchParams.get("search") ?? "";
   const area = searchParams.get("area") ?? "";
@@ -238,6 +244,7 @@ export function CustomersPage() {
           customers={customers}
           isLoading={isLoading}
           isError={isError}
+          onView={openView}
           onEdit={openEdit}
           rowCount={PAGE_SIZE}
         />
@@ -275,6 +282,11 @@ export function CustomersPage() {
       </div>
 
       <CustomerFormDialog open={dialogOpen} onOpenChange={setDialogOpen} customer={editing} />
+
+      {/* Detail side sheet (nested route /customers/:id) */}
+      <Suspense fallback={null}>
+        <Outlet />
+      </Suspense>
     </>
   );
 }

@@ -1,5 +1,4 @@
 import { Eye } from "lucide-react";
-import { Link } from "react-router-dom";
 import { SortableHeader } from "@/components/common/sortable-header";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -23,6 +22,7 @@ interface PlansTableProps {
   sortBy: PlanSortBy;
   sortOrder: SortOrder;
   onSort: (column: PlanSortBy) => void;
+  onView: (id: number) => void;
   rowCount?: number;
 }
 
@@ -35,6 +35,7 @@ export function PlansTable({
   sortBy,
   sortOrder,
   onSort,
+  onView,
   rowCount = 10,
 }: PlansTableProps) {
   return (
@@ -89,9 +90,13 @@ export function PlansTable({
             plans.map((plan) => (
               <TableRow key={plan.id}>
                 <TableCell className="font-medium">
-                  <Link to={`/plans/${plan.id}`} className="hover:underline">
+                  <button
+                    type="button"
+                    onClick={() => onView(plan.id)}
+                    className="text-left hover:underline"
+                  >
                     {plan.name}
-                  </Link>
+                  </button>
                 </TableCell>
                 <TableCell className="text-right tabular-nums">
                   {formatCurrency(plan.chitValue)}
@@ -109,10 +114,14 @@ export function PlansTable({
                   <PlanStatusBadge status={plan.status} />
                 </TableCell>
                 <TableCell>
-                  <Button asChild variant="ghost" size="icon" className="size-8" aria-label="View plan">
-                    <Link to={`/plans/${plan.id}`}>
-                      <Eye className="size-4" />
-                    </Link>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-8"
+                    aria-label="View plan"
+                    onClick={() => onView(plan.id)}
+                  >
+                    <Eye className="size-4" />
                   </Button>
                 </TableCell>
               </TableRow>

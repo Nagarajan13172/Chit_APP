@@ -1,6 +1,6 @@
 import { Plus, Search, X } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { Outlet, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { RoleGuard } from "@/components/auth/role-guard";
 import { PageHeader } from "@/components/common/page-header";
 import { PaginationBar } from "@/components/common/pagination-bar";
@@ -25,6 +25,11 @@ const ALL_STATUS = "all";
 
 export function PlansPage() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const openView = (id: number) =>
+    navigate({ pathname: `/plans/${id}`, search: location.search });
 
   const search = searchParams.get("search") ?? "";
   const status = (searchParams.get("status") as PlanStatus | null) ?? "";
@@ -150,6 +155,7 @@ export function PlansPage() {
           sortBy={sortBy}
           sortOrder={sortOrder}
           onSort={handleSort}
+          onView={openView}
           rowCount={PAGE_SIZE}
         />
 
@@ -166,6 +172,11 @@ export function PlansPage() {
       </div>
 
       <PlanFormDialog open={dialogOpen} onOpenChange={setDialogOpen} />
+
+      {/* Detail side sheet (nested route /plans/:id) */}
+      <Suspense fallback={null}>
+        <Outlet />
+      </Suspense>
     </>
   );
 }

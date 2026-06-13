@@ -1,5 +1,4 @@
 import { Eye, MoreHorizontal, Pencil } from "lucide-react";
-import { Link } from "react-router-dom";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -28,6 +27,7 @@ interface CustomersTableProps {
   customers: Customer[];
   isLoading: boolean;
   isError: boolean;
+  onView: (id: number) => void;
   onEdit: (customer: Customer) => void;
   rowCount?: number;
 }
@@ -55,6 +55,7 @@ export function CustomersTable({
   customers,
   isLoading,
   isError,
+  onView,
   onEdit,
   rowCount = 10,
 }: CustomersTableProps) {
@@ -110,12 +111,13 @@ export function CustomersTable({
                         </AvatarFallback>
                       </Avatar>
                       <div className="min-w-0">
-                        <Link
-                          to={`/customers/${customer.id}`}
-                          className="block truncate font-medium hover:underline"
+                        <button
+                          type="button"
+                          onClick={() => onView(customer.id)}
+                          className="block max-w-full truncate text-left font-medium hover:underline"
                         >
                           {customer.name}
-                        </Link>
+                        </button>
                         <span className="text-xs text-muted-foreground">ID: #CUST-{customer.id}</span>
                       </div>
                     </div>
@@ -182,11 +184,9 @@ export function CustomersTable({
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem asChild>
-                          <Link to={`/customers/${customer.id}`}>
-                            <Eye className="mr-2 size-4" />
-                            View
-                          </Link>
+                        <DropdownMenuItem onClick={() => onView(customer.id)}>
+                          <Eye className="mr-2 size-4" />
+                          View
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => onEdit(customer)}>
                           <Pencil className="mr-2 size-4" />

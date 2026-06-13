@@ -16,12 +16,14 @@ const DashboardPage = lazy(() =>
 const CustomersPage = lazy(() =>
   import("@/pages/customers-page").then((m) => ({ default: m.CustomersPage })),
 );
-const CustomerDetailPage = lazy(() =>
-  import("@/pages/customer-detail-page").then((m) => ({ default: m.CustomerDetailPage })),
+const CustomerDetailSheet = lazy(() =>
+  import("@/features/customers/customer-detail-sheet").then((m) => ({
+    default: m.CustomerDetailSheet,
+  })),
 );
 const PlansPage = lazy(() => import("@/pages/plans-page").then((m) => ({ default: m.PlansPage })));
-const PlanDetailPage = lazy(() =>
-  import("@/pages/plan-detail-page").then((m) => ({ default: m.PlanDetailPage })),
+const PlanDetailSheet = lazy(() =>
+  import("@/features/plans/plan-detail-sheet").then((m) => ({ default: m.PlanDetailSheet })),
 );
 const CollectionsPage = lazy(() =>
   import("@/pages/collections-page").then((m) => ({ default: m.CollectionsPage })),
@@ -60,10 +62,16 @@ const router = createBrowserRouter([
         element: <AppLayout />,
         children: [
           { index: true, element: <DashboardPage /> },
-          { path: "customers", element: <CustomersPage /> },
-          { path: "customers/:id", element: <CustomerDetailPage /> },
-          { path: "plans", element: <PlansPage /> },
-          { path: "plans/:id", element: <PlanDetailPage /> },
+          {
+            path: "customers",
+            element: <CustomersPage />,
+            children: [{ path: ":id", element: <CustomerDetailSheet /> }],
+          },
+          {
+            path: "plans",
+            element: <PlansPage />,
+            children: [{ path: ":id", element: <PlanDetailSheet /> }],
+          },
           { path: "collections", element: <CollectionsPage /> },
           { path: "collections/customers/:id", element: <CustomerCollectionsPage /> },
           { path: "collections/memberships/:id", element: <MembershipSchedulePage /> },
