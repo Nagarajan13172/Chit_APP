@@ -6,6 +6,7 @@ import {
   listQuerySchema,
   searchQuerySchema,
   idParamSchema,
+  portalPasswordSchema,
 } from "./customer.validation.js";
 import { validate } from "../../middleware/validate.js";
 import { authenticate } from "../../middleware/authenticate.js";
@@ -29,6 +30,14 @@ router.put(
   validate(idParamSchema, "params"),
   validate(updateCustomerSchema),
   customerController.update
+);
+
+// Enable/replace the customer's self-service portal password (ADMIN + AGENT).
+router.post(
+  "/:id/portal-password",
+  validate(idParamSchema, "params"),
+  validate(portalPasswordSchema),
+  customerController.setPortalPassword
 );
 
 export default router;

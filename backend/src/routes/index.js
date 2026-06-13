@@ -5,6 +5,7 @@ import planRoutes from "../modules/plans/plan.routes.js";
 import collectionRoutes from "../modules/collections/collection.routes.js";
 import paymentRoutes from "../modules/payments/payment.routes.js";
 import reportRoutes from "../modules/reports/report.routes.js";
+import portalRoutes from "../modules/portal/portal.routes.js";
 
 const router = Router();
 
@@ -17,6 +18,7 @@ router.use("/customers", customerRoutes);
 router.use("/plans", planRoutes);
 router.use("/payments", paymentRoutes);
 router.use("/reports", reportRoutes);
+router.use("/portal", portalRoutes);
 // Collection reads — /memberships/:id/installments, /customers/:id/history, /customers/:id/pending
 router.use(collectionRoutes);
 // router.use("/payments", paymentRoutes);

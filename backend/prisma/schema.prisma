@@ -51,13 +51,15 @@ model User {
 }
 
 model Customer {
-  id          Int          @id @default(autoincrement())
-  name        String
-  phone       String       @unique
-  email       String?
-  address     String?
-  area        String?
-  createdBy   Int          @map("created_by")
+  id           Int          @id @default(autoincrement())
+  name         String
+  phone        String       @unique
+  email        String?
+  address      String?
+  area         String?
+  // Set by staff to enable the customer self-service portal (nullable = no portal access).
+  passwordHash String?      @map("password_hash")
+  createdBy    Int          @map("created_by")
   creator     User         @relation(fields: [createdBy], references: [id])
   memberships Membership[]
   createdAt   DateTime     @default(now()) @map("created_at")

@@ -21,6 +21,11 @@ export const search = asyncHandler(async (req, res) => {
   res.json({ success: true, data: customers });
 });
 
+export const setPortalPassword = asyncHandler(async (req, res) => {
+  const result = await customerService.setPortalPassword(req.params.id, req.body.password);
+  res.json({ success: true, message: "Portal access enabled", data: result });
+});
+
 export const getById = asyncHandler(async (req, res) => {
   const customer = await customerService.getCustomerById(req.params.id);
   res.json({ success: true, data: customer });

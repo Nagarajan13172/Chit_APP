@@ -1,5 +1,6 @@
 import { prisma } from "../../config/prisma.js";
 import { ApiError } from "../../utils/ApiError.js";
+import { hashPassword } from "../../utils/password.js";
 import { startOfBusinessDay } from "../../utils/businessTime.js";
 
 const round2 = (n) => Math.round((Number(n) + Number.EPSILON) * 100) / 100;
@@ -113,6 +114,15 @@ export async function searchByPhone(phone) {
     orderBy: { name: "asc" },
     take: 25,
   });
+}
+
+/** Set/replace a customer's self-service portal password (staff action). */
+export async function setPortalPassword(id, password) {
+  const existing = await prisma.customer.findUnique({ where: { id } });
+  if (!existing) throw ApiError.notFound("Customer not found");
+  const passwordHash = await hashPassword(password);
+  await prisma.customer.update({ where: { id }, data: { passwordHash } });
+  return { id, portalEnabled: true };
 }
 
 export async function getCustomerById(id) {

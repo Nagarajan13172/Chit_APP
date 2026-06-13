@@ -55,3 +55,7 @@ export const searchQuerySchema = z.object({
 export const idParamSchema = z.object({
   id: z.coerce.number().int().positive("Invalid id"),
 });
+
+export const portalPasswordSchema = z.object({
+  password: z.string().min(6, "Password must be at least 6 characters").max(72),
+});

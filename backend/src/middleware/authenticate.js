@@ -12,6 +12,10 @@ export function authenticate(req, res, next) {
 
   try {
     const payload = verifyToken(token);
+    // Customer (portal) tokens must never authenticate staff endpoints.
+    if (payload.type === "customer") {
+      return next(ApiError.unauthorized("Invalid token for this resource"));
+    }
     req.user = { id: payload.sub, email: payload.email, role: payload.role, name: payload.name };
     next();
   } catch (err) {
