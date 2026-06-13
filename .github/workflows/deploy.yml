@@ -46,6 +46,13 @@ jobs:
             set -e
             cd ~/${{ env.DEPLOY_DIR }}
 
+            if ! command -v docker >/dev/null 2>&1; then
+              echo "→ Docker not found — installing via get.docker.com"
+              curl -fsSL https://get.docker.com | sh
+            fi
+            docker --version
+            docker compose version >/dev/null 2>&1 || { echo "Docker Compose v2 plugin is missing — install 'docker-compose-plugin'"; exit 1; }
+
             echo "→ Unpacking project"
             tar xzf deploy.tar.gz && rm -f deploy.tar.gz
 
