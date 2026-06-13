@@ -1,0 +1,31 @@
+# Traefik dynamic config (file provider). Avoids the Docker-socket label
+# provider so it's independent of the host's Docker API version. Traefik reaches
+# the backend/frontend containers by service name over the compose network.
+http:
+  routers:
+    frontend:
+      rule: "Host(`chitapp.snagarajan.me`)"
+      entryPoints:
+        - websecure
+      service: frontend
+      tls:
+        certResolver: le
+
+    backend:
+      rule: "Host(`chitapp.snagarajan.me`) && PathPrefix(`/api`)"
+      entryPoints:
+        - websecure
+      service: backend
+      tls:
+        certResolver: le
+
+  services:
+    frontend:
+      loadBalancer:
+        servers:
+          - url: "http://frontend:80"
+
+    backend:
+      loadBalancer:
+        servers:
+          - url: "http://backend:4000"

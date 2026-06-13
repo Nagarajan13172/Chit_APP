@@ -79,5 +79,7 @@ curl -k --resolve chitapp.snagarajan.me:443:127.0.0.1 https://chitapp.snagarajan
 docker compose -f docker-compose.prod.yml --env-file production.env down -v   # tear down
 ```
 
-> Note: Traefik's Docker-label discovery may log `Error response from daemon` on **Docker Desktop
-> for macOS** with very new Docker builds — a host quirk only; it works on a standard Linux VPS.
+> Routing uses Traefik's **file provider** ([`traefik/dynamic.yml`](traefik/dynamic.yml)), not the
+> Docker-socket label provider — so it's independent of the host's Docker API version (the
+> `get.docker.com` script installs the newest Docker, whose API the label provider can't negotiate).
+> If you change `DOMAIN`, update the `Host(...)` rules in `traefik/dynamic.yml` too.
