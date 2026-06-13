@@ -1,9 +1,13 @@
-import { Plus, Search, X } from "lucide-react";
+import { Download, Plus, Search } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import { listCustomers } from "@/api/customers.api";
+import { getApiErrorMessage } from "@/api/client";
+import { DataPagination } from "@/components/common/data-pagination";
 import { PageHeader } from "@/components/common/page-header";
-import { PaginationBar } from "@/components/common/pagination-bar";
+import { StatCard } from "@/components/common/stat-card";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -12,24 +16,39 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useDebouncedValue } from "@/hooks/use-debounced-value";
+import { toast } from "sonner";
 import { CustomerFormDialog } from "@/features/customers/customer-form-dialog";
 import { CustomersTable } from "@/features/customers/customers-table";
 import { useCustomerAreas, useCustomers } from "@/features/customers/queries";
-import type { Customer, CustomerListParams, CustomerSortBy, SortOrder } from "@/types/customer";
+import { usePlanOptions } from "@/features/plans/queries";
+import { useReportSummary } from "@/features/reports/queries";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
+import { downloadCsv } from "@/lib/csv";
+import { formatCurrency } from "@/lib/format";
+import type { Customer, CustomerListParams, CustomerStatusFilter } from "@/types/customer";
 
 const PAGE_SIZE = 10;
-const ALL_AREAS = "all";
+const ALL = "all";
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="space-y-1.5">
+      <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        {label}
+      </label>
+      {children}
+    </div>
+  );
+}
 
 export function CustomersPage() {
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // URL is the source of truth for filters/sort/page (shareable + back-button safe).
   const search = searchParams.get("search") ?? "";
   const area = searchParams.get("area") ?? "";
+  const planId = searchParams.get("planId") ?? "";
+  const status = searchParams.get("status") ?? "";
   const page = Number(searchParams.get("page") ?? "1") || 1;
-  const sortBy = (searchParams.get("sortBy") as CustomerSortBy | null) ?? "createdAt";
-  const sortOrder = (searchParams.get("sortOrder") as SortOrder | null) ?? "desc";
 
   const setParams = useCallback(
     (updates: Record<string, string | undefined>) => {
@@ -48,7 +67,6 @@ export function CustomersPage() {
     [setSearchParams],
   );
 
-  // Debounced search box → URL (resets to page 1 on change).
   const [searchInput, setSearchInput] = useState(search);
   const debouncedSearch = useDebouncedValue(searchInput, 350);
   useEffect(() => {
@@ -58,28 +76,31 @@ export function CustomersPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedSearch]);
 
-  const params = useMemo<CustomerListParams>(
+  const baseFilters = useMemo<CustomerListParams>(
     () => ({
-      page,
-      limit: PAGE_SIZE,
       search: search || undefined,
       area: area || undefined,
-      sortBy,
-      sortOrder,
+      planId: planId ? Number(planId) : undefined,
+      status: (status || undefined) as CustomerStatusFilter | undefined,
+      withSummary: true,
     }),
-    [page, search, area, sortBy, sortOrder],
+    [search, area, planId, status],
+  );
+  const params = useMemo<CustomerListParams>(
+    () => ({ ...baseFilters, page, limit: PAGE_SIZE }),
+    [baseFilters, page],
   );
 
   const { data, isLoading, isError, isFetching } = useCustomers(params);
   const { data: areas = [] } = useCustomerAreas();
+  const { data: planOptions = [] } = usePlanOptions();
+  const { data: summary } = useReportSummary();
 
   const customers = data?.data ?? [];
   const pagination = data?.pagination;
 
-  // Dialog state: null target = create, a customer = edit.
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Customer | null>(null);
-
   const openCreate = () => {
     setEditing(null);
     setDialogOpen(true);
@@ -89,95 +110,168 @@ export function CustomersPage() {
     setDialogOpen(true);
   };
 
-  const handleSort = (column: CustomerSortBy) => {
-    if (column === sortBy) {
-      setParams({ sortOrder: sortOrder === "asc" ? "desc" : "asc", page: undefined });
-    } else {
-      setParams({
-        sortBy: column,
-        sortOrder: column === "createdAt" ? "desc" : "asc",
-        page: undefined,
-      });
+  const [exporting, setExporting] = useState(false);
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      const res = await listCustomers({ ...baseFilters, page: 1, limit: 1000 });
+      const rows = res.data.map((c) => [
+        `#CUST-${c.id}`,
+        c.name,
+        c.phone,
+        c.email ?? "",
+        c.area ?? "",
+        c.summary?.groupName ?? "",
+        c.summary?.groupCount ?? 0,
+        c.summary?.totalValue ?? 0,
+        c.summary?.amountPaid ?? 0,
+        `${c.summary?.progress ?? 0}%`,
+        (c.summary?.overdueCount ?? 0) > 0 ? `Overdue (${c.summary?.overdueCount})` : "Up-to-date",
+      ]);
+      downloadCsv(
+        "customers.csv",
+        ["ID", "Name", "Phone", "Email", "Area", "Chit Group", "Groups", "Total Value", "Amount Paid", "Progress", "Status"],
+        rows,
+      );
+      toast.success(`Exported ${rows.length} customers`);
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, "Export failed"));
+    } finally {
+      setExporting(false);
     }
-  };
-
-  const clearSearch = () => {
-    setSearchInput("");
-    setParams({ search: undefined, page: undefined });
   };
 
   return (
     <>
-      <PageHeader title="Customers" description="Manage customers, search and edit details.">
+      <PageHeader
+        title="Customer Management"
+        description="Manage and monitor chit fund participants across all active groups."
+      >
+        <Button variant="outline" onClick={handleExport} disabled={exporting}>
+          <Download className="size-4" />
+          Export CSV
+        </Button>
         <Button onClick={openCreate}>
           <Plus className="size-4" />
-          Add customer
+          Add New Customer
         </Button>
       </PageHeader>
 
-      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
-        <div className="relative w-full sm:max-w-xs">
-          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            placeholder="Search by name or phone…"
-            className="pl-9 pr-9"
-          />
-          {searchInput ? (
-            <button
-              type="button"
-              onClick={clearSearch}
-              aria-label="Clear search"
-              className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-muted-foreground hover:text-foreground"
-            >
-              <X className="size-4" />
-            </button>
-          ) : null}
-        </div>
+      <Card className="mb-6">
+        <CardContent className="grid gap-4 p-4 sm:grid-cols-2 lg:grid-cols-4">
+          <Field label="Search customer">
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                placeholder="Name or phone…"
+                className="pl-9"
+              />
+            </div>
+          </Field>
 
-        <Select
-          value={area || ALL_AREAS}
-          onValueChange={(value) =>
-            setParams({ area: value === ALL_AREAS ? undefined : value, page: undefined })
-          }
-        >
-          <SelectTrigger className="w-full sm:w-48">
-            <SelectValue placeholder="All areas" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ALL_AREAS}>All areas</SelectItem>
-            {areas.map((a) => (
-              <SelectItem key={a} value={a}>
-                {a}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+          <Field label="Group">
+            <Select
+              value={planId || ALL}
+              onValueChange={(value) =>
+                setParams({ planId: value === ALL ? undefined : value, page: undefined })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="All Groups" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={ALL}>All Groups</SelectItem>
+                {planOptions.map((plan) => (
+                  <SelectItem key={plan.id} value={String(plan.id)}>
+                    {plan.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </Field>
+
+          <Field label="Status">
+            <Select
+              value={status || ALL}
+              onValueChange={(value) =>
+                setParams({ status: value === ALL ? undefined : value, page: undefined })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="All Statuses" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={ALL}>All Statuses</SelectItem>
+                <SelectItem value="UP_TO_DATE">Up-to-date</SelectItem>
+                <SelectItem value="OVERDUE">Overdue</SelectItem>
+              </SelectContent>
+            </Select>
+          </Field>
+
+          <Field label="Area">
+            <Select
+              value={area || ALL}
+              onValueChange={(value) =>
+                setParams({ area: value === ALL ? undefined : value, page: undefined })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="All Areas" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={ALL}>All Areas</SelectItem>
+                {areas.map((a) => (
+                  <SelectItem key={a} value={a}>
+                    {a}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </Field>
+        </CardContent>
+      </Card>
 
       <div className="space-y-4">
         <CustomersTable
           customers={customers}
           isLoading={isLoading}
           isError={isError}
-          sortBy={sortBy}
-          sortOrder={sortOrder}
-          onSort={handleSort}
           onEdit={openEdit}
           rowCount={PAGE_SIZE}
         />
 
         {pagination ? (
-          <PaginationBar
+          <DataPagination
             page={pagination.page}
-            limit={pagination.limit}
-            total={pagination.total}
             totalPages={pagination.totalPages}
+            total={pagination.total}
+            limit={pagination.limit}
+            itemLabel="customers"
             onPageChange={(p) => setParams({ page: p === 1 ? undefined : String(p) })}
             disabled={isFetching}
           />
         ) : null}
+      </div>
+
+      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard label="Total active customers" value={summary ? summary.activeCustomers : "—"} />
+        <StatCard
+          label="Collections this month"
+          value={summary ? formatCurrency(summary.collectionsThisMonth.amount) : "—"}
+          valueClassName="text-emerald-600 dark:text-emerald-400"
+        />
+        <StatCard
+          label="Pending defaults"
+          value={summary ? summary.pending.defaulters : "—"}
+          valueClassName="text-destructive"
+        />
+        <StatCard
+          label="Active chit groups"
+          value={summary ? summary.activeChitGroups : "—"}
+          valueClassName="text-primary"
+        />
       </div>
 
       <CustomerFormDialog open={dialogOpen} onOpenChange={setDialogOpen} customer={editing} />

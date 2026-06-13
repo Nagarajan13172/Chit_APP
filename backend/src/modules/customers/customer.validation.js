@@ -34,9 +34,15 @@ export const updateCustomerSchema = createCustomerSchema
 
 export const listQuerySchema = z.object({
   page: blankToUndefined(z.coerce.number().int().min(1).default(1)),
-  limit: blankToUndefined(z.coerce.number().int().min(1).max(100).default(10)),
+  limit: blankToUndefined(z.coerce.number().int().min(1).max(1000).default(10)),
   search: blankToUndefined(z.string().trim().optional()),
   area: blankToUndefined(z.string().trim().optional()),
+  // Filter by chit plan ("group") membership.
+  planId: blankToUndefined(z.coerce.number().int().positive().optional()),
+  // Filter by collection status: OVERDUE = has an overdue installment; UP_TO_DATE = none.
+  status: blankToUndefined(z.enum(["UP_TO_DATE", "OVERDUE"]).optional()),
+  // When "true", each row includes a financial summary (group, value, paid, progress, overdue).
+  withSummary: blankToUndefined(z.enum(["true", "false"]).optional()),
   sortBy: blankToUndefined(z.enum(["name", "phone", "createdAt"]).default("createdAt")),
   sortOrder: blankToUndefined(z.enum(["asc", "desc"]).default("desc")),
 });

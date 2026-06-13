@@ -1,5 +1,6 @@
-import { ArrowDown, ArrowUp, ArrowUpDown, Eye, MoreHorizontal, Pencil } from "lucide-react";
+import { Eye, MoreHorizontal, Pencil } from "lucide-react";
 import { Link } from "react-router-dom";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -8,6 +9,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -17,53 +19,35 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { avatarTint, initials } from "@/lib/avatar";
+import { formatCurrency } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import { formatDate } from "@/lib/format";
-import type { Customer, CustomerSortBy, SortOrder } from "@/types/customer";
+import type { Customer } from "@/types/customer";
 
 interface CustomersTableProps {
   customers: Customer[];
   isLoading: boolean;
   isError: boolean;
-  sortBy: CustomerSortBy;
-  sortOrder: SortOrder;
-  onSort: (column: CustomerSortBy) => void;
   onEdit: (customer: Customer) => void;
-  /** Number of skeleton rows while loading (keeps layout stable). */
   rowCount?: number;
 }
 
-function SortableHead({
-  column,
-  label,
-  sortBy,
-  sortOrder,
-  onSort,
-  className,
-}: {
-  column: CustomerSortBy;
-  label: string;
-  sortBy: CustomerSortBy;
-  sortOrder: SortOrder;
-  onSort: (column: CustomerSortBy) => void;
-  className?: string;
-}) {
-  const active = sortBy === column;
-  const Icon = active ? (sortOrder === "asc" ? ArrowUp : ArrowDown) : ArrowUpDown;
+const COLUMN_COUNT = 7;
+
+function StatusPill({ overdueCount }: { overdueCount: number }) {
+  if (overdueCount > 0) {
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-destructive/10 px-2.5 py-1 text-xs font-medium text-destructive">
+        <span className="size-1.5 rounded-full bg-destructive" />
+        Overdue ({overdueCount})
+      </span>
+    );
+  }
   return (
-    <TableHead className={className}>
-      <button
-        type="button"
-        onClick={() => onSort(column)}
-        className={cn(
-          "-ml-2 inline-flex items-center gap-1 rounded px-2 py-1 text-sm font-medium hover:text-foreground",
-          active ? "text-foreground" : "text-muted-foreground",
-        )}
-      >
-        {label}
-        <Icon className="size-3.5" />
-      </button>
-    </TableHead>
+    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+      <span className="size-1.5 rounded-full bg-emerald-500" />
+      Up-to-date
+    </span>
   );
 }
 
@@ -71,9 +55,6 @@ export function CustomersTable({
   customers,
   isLoading,
   isError,
-  sortBy,
-  sortOrder,
-  onSort,
   onEdit,
   rowCount = 10,
 }: CustomersTableProps) {
@@ -82,92 +63,141 @@ export function CustomersTable({
       <Table>
         <TableHeader>
           <TableRow>
-            <SortableHead column="name" label="Name" sortBy={sortBy} sortOrder={sortOrder} onSort={onSort} />
-            <SortableHead column="phone" label="Phone" sortBy={sortBy} sortOrder={sortOrder} onSort={onSort} />
-            <TableHead>Email</TableHead>
-            <TableHead>Area</TableHead>
-            <TableHead className="text-center">Plans</TableHead>
-            <SortableHead
-              column="createdAt"
-              label="Created"
-              sortBy={sortBy}
-              sortOrder={sortOrder}
-              onSort={onSort}
-            />
-            <TableHead className="w-12" />
+            <TableHead>Customer Name &amp; ID</TableHead>
+            <TableHead>Chit Group</TableHead>
+            <TableHead className="text-right">Total Value</TableHead>
+            <TableHead className="text-right">Amount Paid</TableHead>
+            <TableHead>Progress</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead className="w-16 text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {isError ? (
             <TableRow>
-              <TableCell colSpan={7} className="h-32 text-center text-sm text-destructive">
+              <TableCell colSpan={COLUMN_COUNT} className="h-32 text-center text-sm text-destructive">
                 Failed to load customers. Please retry.
               </TableCell>
             </TableRow>
           ) : isLoading ? (
             Array.from({ length: rowCount }).map((_, i) => (
               <TableRow key={i}>
-                {Array.from({ length: 7 }).map((__, j) => (
+                {Array.from({ length: COLUMN_COUNT }).map((__, j) => (
                   <TableCell key={j}>
-                    <Skeleton className="h-5 w-full" />
+                    <Skeleton className="h-9 w-full" />
                   </TableCell>
                 ))}
               </TableRow>
             ))
           ) : customers.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={7} className="h-32 text-center text-sm text-muted-foreground">
+              <TableCell colSpan={COLUMN_COUNT} className="h-32 text-center text-sm text-muted-foreground">
                 No customers found.
               </TableCell>
             </TableRow>
           ) : (
-            customers.map((customer) => (
-              <TableRow key={customer.id}>
-                <TableCell className="font-medium">
-                  <Link to={`/customers/${customer.id}`} className="hover:underline">
-                    {customer.name}
-                  </Link>
-                </TableCell>
-                <TableCell className="tabular-nums">{customer.phone}</TableCell>
-                <TableCell className="text-muted-foreground">{customer.email ?? "—"}</TableCell>
-                <TableCell>
-                  {customer.area ? (
-                    <Badge variant="secondary" className="font-normal">
-                      {customer.area}
-                    </Badge>
-                  ) : (
-                    <span className="text-muted-foreground">—</span>
-                  )}
-                </TableCell>
-                <TableCell className="text-center tabular-nums">
-                  {customer._count?.memberships ?? 0}
-                </TableCell>
-                <TableCell className="text-muted-foreground">
-                  {formatDate(customer.createdAt)}
-                </TableCell>
-                <TableCell>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="size-8" aria-label="Row actions">
-                        <MoreHorizontal className="size-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem asChild>
-                        <Link to={`/customers/${customer.id}`}>
-                          <Eye className="mr-2 size-4" />
-                          View
+            customers.map((customer) => {
+              const s = customer.summary;
+              const hasGroup = (s?.groupCount ?? 0) > 0;
+              const overdue = s?.overdueCount ?? 0;
+              return (
+                <TableRow key={customer.id}>
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      <Avatar className="size-9">
+                        <AvatarFallback className={cn("text-xs font-medium", avatarTint(customer.name))}>
+                          {initials(customer.name)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="min-w-0">
+                        <Link
+                          to={`/customers/${customer.id}`}
+                          className="block truncate font-medium hover:underline"
+                        >
+                          {customer.name}
                         </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => onEdit(customer)}>
-                        <Pencil className="mr-2 size-4" />
-                        Edit
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
-            ))
+                        <span className="text-xs text-muted-foreground">ID: #CUST-{customer.id}</span>
+                      </div>
+                    </div>
+                  </TableCell>
+
+                  <TableCell>
+                    {hasGroup ? (
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm">{s?.groupName}</span>
+                        {s && s.groupCount > 1 ? (
+                          <Badge variant="secondary" className="font-normal">
+                            +{s.groupCount - 1}
+                          </Badge>
+                        ) : null}
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </TableCell>
+
+                  <TableCell className="text-right tabular-nums">
+                    {hasGroup ? formatCurrency(s?.totalValue ?? 0) : "—"}
+                  </TableCell>
+
+                  <TableCell
+                    className={cn(
+                      "text-right font-medium tabular-nums",
+                      hasGroup
+                        ? overdue > 0
+                          ? "text-amber-600 dark:text-amber-400"
+                          : "text-emerald-600 dark:text-emerald-400"
+                        : "text-muted-foreground",
+                    )}
+                  >
+                    {hasGroup ? formatCurrency(s?.amountPaid ?? 0) : "—"}
+                  </TableCell>
+
+                  <TableCell>
+                    {hasGroup ? (
+                      <div className="w-32 space-y-1">
+                        <Progress value={s?.progress ?? 0} className="h-1.5" />
+                        <span className="text-xs text-muted-foreground">
+                          {s?.progress ?? 0}% Completed
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </TableCell>
+
+                  <TableCell>
+                    {hasGroup ? (
+                      <StatusPill overdueCount={overdue} />
+                    ) : (
+                      <span className="text-xs text-muted-foreground">No plans</span>
+                    )}
+                  </TableCell>
+
+                  <TableCell className="text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="size-8" aria-label="Row actions">
+                          <MoreHorizontal className="size-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem asChild>
+                          <Link to={`/customers/${customer.id}`}>
+                            <Eye className="mr-2 size-4" />
+                            View
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => onEdit(customer)}>
+                          <Pencil className="mr-2 size-4" />
+                          Edit
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              );
+            })
           )}
         </TableBody>
       </Table>
