@@ -3,8 +3,10 @@ import { ProtectedRoute } from "@/components/auth/protected-route";
 import { RoleRoute } from "@/components/auth/role-route";
 import { AppLayout } from "@/components/layout/app-layout";
 import { CollectionsPage } from "@/pages/collections-page";
+import { CustomerCollectionsPage } from "@/pages/customer-collections-page";
 import { CustomerDetailPage } from "@/pages/customer-detail-page";
 import { CustomersPage } from "@/pages/customers-page";
+import { MembershipSchedulePage } from "@/pages/membership-schedule-page";
 import { DashboardPage } from "@/pages/dashboard-page";
 import { LoginPage } from "@/pages/login-page";
 import { NotFoundPage } from "@/pages/not-found-page";
@@ -26,6 +28,8 @@ const router = createBrowserRouter([
           { path: "plans", element: <PlansPage /> },
           { path: "plans/:id", element: <PlanDetailPage /> },
           { path: "collections", element: <CollectionsPage /> },
+          { path: "collections/customers/:id", element: <CustomerCollectionsPage /> },
+          { path: "collections/memberships/:id", element: <MembershipSchedulePage /> },
           // Admin-only section.
           {
             element: <RoleRoute roles={["ADMIN"]} />,

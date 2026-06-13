@@ -1,4 +1,6 @@
+import { ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -17,7 +19,7 @@ interface PlanMembersTableProps {
   isError: boolean;
 }
 
-const COLUMN_COUNT = 6;
+const COLUMN_COUNT = 7;
 
 export function PlanMembersTable({ members, isLoading, isError }: PlanMembersTableProps) {
   return (
@@ -31,6 +33,7 @@ export function PlanMembersTable({ members, isLoading, isError }: PlanMembersTab
             <TableHead>Area</TableHead>
             <TableHead>Status</TableHead>
             <TableHead className="text-center">Installments</TableHead>
+            <TableHead className="w-28 text-right" />
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -76,6 +79,14 @@ export function PlanMembersTable({ members, isLoading, isError }: PlanMembersTab
                 </TableCell>
                 <TableCell className="text-center tabular-nums">
                   {member._count?.installments ?? 0}
+                </TableCell>
+                <TableCell className="text-right">
+                  <Button asChild size="sm" variant="ghost">
+                    <Link to={`/collections/memberships/${member.id}`}>
+                      Schedule
+                      <ChevronRight className="size-4" />
+                    </Link>
+                  </Button>
                 </TableCell>
               </TableRow>
             ))

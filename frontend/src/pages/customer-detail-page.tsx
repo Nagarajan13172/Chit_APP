@@ -1,4 +1,4 @@
-import { ArrowLeft, Pencil } from "lucide-react";
+import { ArrowLeft, Pencil, Wallet } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { Link, useParams } from "react-router-dom";
 import { PageHeader } from "@/components/common/page-header";
@@ -70,6 +70,12 @@ export function CustomerDetailPage() {
     <div>
       {backButton}
       <PageHeader title={customer.name} description={`Customer #${customer.id}`}>
+        <Button asChild variant="outline">
+          <Link to={`/collections/customers/${customer.id}`}>
+            <Wallet className="size-4" />
+            Collections
+          </Link>
+        </Button>
         <Button variant="outline" onClick={() => setEditOpen(true)}>
           <Pencil className="size-4" />
           Edit
