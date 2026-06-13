@@ -27,7 +27,7 @@ export const NAV_ITEMS: NavItem[] = [
   { title: "Customers", to: "/customers", icon: Users },
   { title: "Chit Plans", to: "/plans", icon: Layers },
   { title: "Collections", to: "/collections", icon: Wallet },
-  { title: "Reports", to: "/reports", icon: BarChart3, roles: ["ADMIN"] },
+  { title: "Reports", to: "/reports", icon: BarChart3 },
 ];
 
 /** Visible nav items for a given role (undefined role = signed out → none). */

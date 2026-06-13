@@ -29,6 +29,18 @@ export function usePlan(id: number) {
   });
 }
 
+/** Lightweight {id, name} plan list for filter dropdowns. */
+export function usePlanOptions() {
+  return useQuery({
+    queryKey: [...planKeys.all, "options"],
+    queryFn: async () => {
+      const res = await plansApi.listPlans({ limit: 100, sortBy: "name", sortOrder: "asc" });
+      return res.data.map((plan) => ({ id: plan.id, name: plan.name }));
+    },
+    staleTime: 60_000,
+  });
+}
+
 export function usePlanMembers(id: number) {
   return useQuery({
     queryKey: planKeys.members(id),

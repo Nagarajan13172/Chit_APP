@@ -1,6 +1,5 @@
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { ProtectedRoute } from "@/components/auth/protected-route";
-import { RoleRoute } from "@/components/auth/role-route";
 import { AppLayout } from "@/components/layout/app-layout";
 import { CollectionsPage } from "@/pages/collections-page";
 import { CustomerCollectionsPage } from "@/pages/customer-collections-page";
@@ -30,11 +29,7 @@ const router = createBrowserRouter([
           { path: "collections", element: <CollectionsPage /> },
           { path: "collections/customers/:id", element: <CustomerCollectionsPage /> },
           { path: "collections/memberships/:id", element: <MembershipSchedulePage /> },
-          // Admin-only section.
-          {
-            element: <RoleRoute roles={["ADMIN"]} />,
-            children: [{ path: "reports", element: <ReportsPage /> }],
-          },
+          { path: "reports", element: <ReportsPage /> },
         ],
       },
     ],
