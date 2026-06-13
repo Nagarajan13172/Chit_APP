@@ -3,6 +3,7 @@ import authRoutes from "../modules/auth/auth.routes.js";
 import customerRoutes from "../modules/customers/customer.routes.js";
 import planRoutes from "../modules/plans/plan.routes.js";
 import collectionRoutes from "../modules/collections/collection.routes.js";
+import paymentRoutes from "../modules/payments/payment.routes.js";
 
 const router = Router();
 
@@ -13,6 +14,7 @@ router.get("/health", (req, res) => {
 router.use("/auth", authRoutes);
 router.use("/customers", customerRoutes);
 router.use("/plans", planRoutes);
+router.use("/payments", paymentRoutes);
 // Collection reads — /memberships/:id/installments, /customers/:id/history, /customers/:id/pending
 router.use(collectionRoutes);
 // Future modules mount here:

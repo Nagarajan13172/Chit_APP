@@ -1,27 +1,8 @@
 import { prisma } from "../../config/prisma.js";
-import { env } from "../../config/env.js";
 import { ApiError } from "../../utils/ApiError.js";
+import { startOfBusinessDay } from "../../utils/businessTime.js";
 
 const round2 = (n) => Math.round((n + Number.EPSILON) * 100) / 100;
-
-/**
- * The current calendar day in the business timezone, expressed as a UTC-midnight Date
- * so it compares cleanly against @db.Date dueDate values (also UTC midnight).
- */
-function startOfBusinessDay() {
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: env.businessTz,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  })
-    .formatToParts(new Date())
-    .reduce((acc, p) => {
-      acc[p.type] = p.value;
-      return acc;
-    }, {});
-  return new Date(Date.UTC(Number(parts.year), Number(parts.month) - 1, Number(parts.day)));
-}
 
 // Full include — used where the response surfaces individual receipts (schedule, history).
 const installmentsIncludeFull = {

@@ -214,6 +214,64 @@
       ]
     },
     {
+      "name": "Payments",
+      "item": [
+        {
+          "name": "Record Payment (Cash)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/payments", "host": ["{{baseUrl}}"], "path": ["payments"] },
+            "body": { "mode": "raw", "raw": "{\n  \"installmentId\": 1,\n  \"amount\": 20833.33,\n  \"lateFee\": 0,\n  \"mode\": \"CASH\",\n  \"notes\": \"Monthly collection\"\n}" }
+          }
+        },
+        {
+          "name": "Record Payment (UPI - needs reference)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/payments", "host": ["{{baseUrl}}"], "path": ["payments"] },
+            "body": { "mode": "raw", "raw": "{\n  \"installmentId\": 2,\n  \"amount\": 20833.33,\n  \"mode\": \"UPI\",\n  \"referenceNumber\": \"UPI-TXN-12345\"\n}" }
+          }
+        },
+        {
+          "name": "List Payments (filters)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/payments?page=1&limit=10&customerId=&membershipId=&mode=&from=&to=",
+              "host": ["{{baseUrl}}"],
+              "path": ["payments"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" },
+                { "key": "customerId", "value": "" },
+                { "key": "membershipId", "value": "" },
+                { "key": "mode", "value": "" },
+                { "key": "from", "value": "" },
+                { "key": "to", "value": "" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Payment Receipt",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/payments/1/receipt", "host": ["{{baseUrl}}"], "path": ["payments", "1", "receipt"] }
+          }
+        }
+      ]
+    },
+    {
       "name": "Collections",
       "item": [
         {

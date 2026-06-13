@@ -36,6 +36,6 @@ npm run dev
 - [x] Module 2 — Customers
 - [x] Module 3 — Chit Plans
 - [x] Module 4 — Collections
-- [ ] Module 5 — Payments
+- [x] Module 5 — Payments
 - [ ] Module 6 — Reports
 - [ ] Frontend
