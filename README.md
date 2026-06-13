@@ -46,5 +46,5 @@ Connection details (if you ever add it manually): from pgAdmin use host **`postg
 - [x] Module 3 — Chit Plans
 - [x] Module 4 — Collections
 - [x] Module 5 — Payments
-- [ ] Module 6 — Reports
+- [x] Module 6 — Reports
 - [ ] Frontend

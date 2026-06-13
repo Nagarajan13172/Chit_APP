@@ -131,5 +131,7 @@ model Payment {
   collector       User        @relation(fields: [collectedBy], references: [id])
   paidAt          DateTime    @default(now()) @map("paid_at")
 
+  @@index([installmentId])
+  @@index([paidAt])
   @@map("payments")
 }

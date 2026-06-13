@@ -301,6 +301,55 @@
       ]
     },
     {
+      "name": "Reports",
+      "item": [
+        {
+          "name": "Dashboard Summary (KPIs)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/reports/summary", "host": ["{{baseUrl}}"], "path": ["reports", "summary"] }
+          }
+        },
+        {
+          "name": "Collections Report",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/reports/collections?from=&to=&planId=&mode=&collectedBy=",
+              "host": ["{{baseUrl}}"],
+              "path": ["reports", "collections"],
+              "query": [
+                { "key": "from", "value": "" },
+                { "key": "to", "value": "" },
+                { "key": "planId", "value": "" },
+                { "key": "mode", "value": "" },
+                { "key": "collectedBy", "value": "" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Pending Collections Report",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/reports/pending?page=1&limit=20&planId=",
+              "host": ["{{baseUrl}}"],
+              "path": ["reports", "pending"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" },
+                { "key": "planId", "value": "" }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
       "name": "Health",
       "request": {
         "method": "GET",
