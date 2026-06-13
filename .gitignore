@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+
+# Environment files (secrets — never commit)
+.env
+.env.local
+.env.example
+.env.*.local
+
+# Build output
+dist/
+build/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-error.log*
+
+# Editor / OS
+.DS_Store
+.vscode/
+.idea/
+
+# Prisma
+# (migrations ARE committed; only ignore generated artifacts if any land outside node_modules)

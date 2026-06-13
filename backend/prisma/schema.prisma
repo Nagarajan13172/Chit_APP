@@ -1,0 +1,134 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  AGENT
+}
+
+enum PlanStatus {
+  ACTIVE
+  CLOSED
+}
+
+enum MembershipStatus {
+  ACTIVE
+  COMPLETED
+  DEFAULTED
+}
+
+enum InstallmentStatus {
+  PENDING
+  PARTIAL
+  PAID
+  OVERDUE
+}
+
+enum PaymentMode {
+  CASH
+  UPI
+  CHEQUE
+}
+
+model User {
+  id           Int       @id @default(autoincrement())
+  name         String
+  email        String    @unique
+  passwordHash String    @map("password_hash")
+  role         Role      @default(AGENT)
+  customers    Customer[]
+  payments     Payment[]
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  @@map("users")
+}
+
+model Customer {
+  id          Int          @id @default(autoincrement())
+  name        String
+  phone       String       @unique
+  email       String?
+  address     String?
+  area        String?
+  createdBy   Int          @map("created_by")
+  creator     User         @relation(fields: [createdBy], references: [id])
+  memberships Membership[]
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+
+  @@index([phone])
+  @@map("customers")
+}
+
+model ChitPlan {
+  id                Int          @id @default(autoincrement())
+  name              String
+  chitValue         Decimal      @map("chit_value") @db.Decimal(12, 2)
+  installmentAmount Decimal      @map("installment_amount") @db.Decimal(12, 2)
+  durationMonths    Int          @map("duration_months")
+  totalMembers      Int          @map("total_members")
+  startDate         DateTime     @map("start_date") @db.Date
+  status            PlanStatus   @default(ACTIVE)
+  memberships       Membership[]
+  createdAt         DateTime     @default(now()) @map("created_at")
+  updatedAt         DateTime     @updatedAt @map("updated_at")
+
+  @@map("chit_plans")
+}
+
+model Membership {
+  id           Int              @id @default(autoincrement())
+  chitPlanId   Int              @map("chit_plan_id")
+  customerId   Int              @map("customer_id")
+  ticketNumber Int?             @map("ticket_number")
+  status       MembershipStatus @default(ACTIVE)
+  joinDate     DateTime         @default(now()) @map("join_date")
+  plan         ChitPlan         @relation(fields: [chitPlanId], references: [id], onDelete: Cascade)
+  customer     Customer         @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  installments Installment[]
+  createdAt    DateTime         @default(now()) @map("created_at")
+  updatedAt    DateTime         @updatedAt @map("updated_at")
+
+  @@unique([chitPlanId, customerId])
+  @@map("memberships")
+}
+
+model Installment {
+  id           Int               @id @default(autoincrement())
+  membershipId Int               @map("membership_id")
+  monthNumber  Int               @map("month_number")
+  dueDate      DateTime          @map("due_date") @db.Date
+  dueAmount    Decimal           @map("due_amount") @db.Decimal(12, 2)
+  status       InstallmentStatus @default(PENDING)
+  membership   Membership        @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+  payments     Payment[]
+  createdAt    DateTime          @default(now()) @map("created_at")
+  updatedAt    DateTime          @updatedAt @map("updated_at")
+
+  @@unique([membershipId, monthNumber])
+  @@map("installments")
+}
+
+model Payment {
+  id              Int         @id @default(autoincrement())
+  installmentId   Int         @map("installment_id")
+  amount          Decimal     @db.Decimal(12, 2)
+  lateFee         Decimal     @default(0) @map("late_fee") @db.Decimal(12, 2)
+  mode            PaymentMode
+  referenceNumber String?     @map("reference_number")
+  notes           String?
+  receiptNumber   String      @unique @map("receipt_number")
+  collectedBy     Int         @map("collected_by")
+  installment     Installment @relation(fields: [installmentId], references: [id], onDelete: Cascade)
+  collector       User        @relation(fields: [collectedBy], references: [id])
+  paidAt          DateTime    @default(now()) @map("paid_at")
+
+  @@map("payments")
+}

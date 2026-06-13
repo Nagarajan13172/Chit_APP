@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: chit_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: chit_user
+      POSTGRES_PASSWORD: chit_pass
+      POSTGRES_DB: chit_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - chit_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U chit_user -d chit_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  chit_pgdata:
