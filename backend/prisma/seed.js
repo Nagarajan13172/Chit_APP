@@ -1,14 +1,8 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import { addMonths } from "../src/utils/date.js";
 
 const prisma = new PrismaClient();
-
-/** Add `n` months to a date (UTC), returning a new Date. */
-function addMonths(date, n) {
-  const d = new Date(date);
-  d.setMonth(d.getMonth() + n);
-  return d;
-}
 
 async function main() {
   console.log("Seeding database...");

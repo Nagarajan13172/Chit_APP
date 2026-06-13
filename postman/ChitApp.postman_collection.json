@@ -151,6 +151,69 @@
       ]
     },
     {
+      "name": "Chit Plans",
+      "item": [
+        {
+          "name": "Create Plan (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/plans", "host": ["{{baseUrl}}"], "path": ["plans"] },
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Gold Monthly - G24\",\n  \"chitValue\": 500000,\n  \"durationMonths\": 24,\n  \"totalMembers\": 24,\n  \"startDate\": \"2025-07-01\"\n}" }
+          }
+        },
+        {
+          "name": "List Plans (paged + filters)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/plans?page=1&limit=10&status=ACTIVE&search=",
+              "host": ["{{baseUrl}}"],
+              "path": ["plans"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" },
+                { "key": "status", "value": "ACTIVE" },
+                { "key": "search", "value": "" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Plan by Id",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/plans/1", "host": ["{{baseUrl}}"], "path": ["plans", "1"] }
+          }
+        },
+        {
+          "name": "Assign Customer to Plan (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/plans/1/members", "host": ["{{baseUrl}}"], "path": ["plans", "1", "members"] },
+            "body": { "mode": "raw", "raw": "{\n  \"customerId\": 4\n}" }
+          }
+        },
+        {
+          "name": "List Plan Members",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/plans/1/members", "host": ["{{baseUrl}}"], "path": ["plans", "1", "members"] }
+          }
+        }
+      ]
+    },
+    {
       "name": "Health",
       "request": {
         "method": "GET",

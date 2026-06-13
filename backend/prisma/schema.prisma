@@ -97,6 +97,7 @@ model Membership {
   updatedAt    DateTime         @updatedAt @map("updated_at")
 
   @@unique([chitPlanId, customerId])
+  @@unique([chitPlanId, ticketNumber])
   @@map("memberships")
 }
 

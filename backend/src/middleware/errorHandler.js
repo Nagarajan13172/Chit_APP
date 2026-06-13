@@ -22,8 +22,13 @@ export function errorHandler(err, req, res, next) {
   // Known Prisma errors (e.g. unique constraint)
   if (err instanceof Prisma.PrismaClientKnownRequestError) {
     if (err.code === "P2002") {
-      const field = err.meta?.target?.[0] ?? "field";
-      return res.status(409).json({ success: false, message: `A record with this ${field} already exists` });
+      // Postgres returns `target` as an array of column names for some indexes and the
+      // index name (a string) for composite ones — handle both without leaking the raw name.
+      const target = err.meta?.target;
+      const message = Array.isArray(target)
+        ? `A record with this ${target.join(", ")} already exists`
+        : "A record with these details already exists";
+      return res.status(409).json({ success: false, message });
     }
     if (err.code === "P2025") {
       return res.status(404).json({ success: false, message: "Record not found" });
