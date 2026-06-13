@@ -34,6 +34,11 @@ export async function updateCustomer(
   return data.data;
 }
 
+/** POST /customers/:id/portal-password — enable/reset the member's portal login (staff). */
+export async function setPortalPassword(id: number, password: string): Promise<void> {
+  await api.post(`/customers/${id}/portal-password`, { password });
+}
+
 /** GET /customers/search?phone= — quick phone lookup (3–10 digits, capped at 25). */
 export async function searchCustomersByPhone(phone: string): Promise<Customer[]> {
   const { data } = await api.get<ApiSuccess<Customer[]>>("/customers/search", {

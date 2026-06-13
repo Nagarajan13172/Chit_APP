@@ -7,6 +7,7 @@ import type {
   PortalDashboard,
   PortalLoginResponse,
   PortalPayment,
+  PortalProfilePayload,
   PortalReceipt,
 } from "@/types/portal";
 
@@ -18,6 +19,12 @@ export async function login(credentials: PortalCredentials): Promise<PortalLogin
 
 export async function getMe(): Promise<PortalCustomer> {
   const { data } = await portalApi.get<ApiSuccess<PortalCustomer>>("/portal/me");
+  return data.data;
+}
+
+/** PATCH /portal/me — member updates their own profile. */
+export async function updateProfile(payload: PortalProfilePayload): Promise<PortalCustomer> {
+  const { data } = await portalApi.patch<ApiSuccess<PortalCustomer>>("/portal/me", payload);
   return data.data;
 }
 

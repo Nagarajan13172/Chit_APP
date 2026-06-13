@@ -12,6 +12,7 @@ interface PortalAuthState {
   customer: PortalCustomer | null;
   token: string | null;
   setSession: (token: string, customer: PortalCustomer) => void;
+  updateCustomer: (customer: PortalCustomer) => void;
   logout: () => void;
 }
 
@@ -23,6 +24,10 @@ export const usePortalAuthStore = create<PortalAuthState>((set) => ({
     setPortalToken(token);
     setStoredPortalCustomer(customer);
     set({ token, customer });
+  },
+  updateCustomer: (customer) => {
+    setStoredPortalCustomer(customer);
+    set({ customer });
   },
   logout: () => {
     clearPortalSession();

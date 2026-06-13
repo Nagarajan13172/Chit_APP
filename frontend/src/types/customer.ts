@@ -28,6 +28,8 @@ export interface Customer {
   _count?: { memberships: number };
   /** Present only on the enriched list (withSummary=true). */
   summary?: CustomerSummary;
+  /** Whether the customer has self-service portal access. */
+  portalEnabled?: boolean;
 }
 
 export type CustomerStatusFilter = "UP_TO_DATE" | "OVERDUE";

@@ -2,6 +2,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import * as portalApi from "@/api/portal.api";
 import { getApiErrorMessage } from "@/api/client";
+import { usePortalAuthStore } from "@/store/portal-auth.store";
+import type { PortalProfilePayload } from "@/types/portal";
 
 export const portalKeys = {
   all: ["portal"] as const,
@@ -20,6 +22,19 @@ export function usePortalChits() {
 
 export function usePortalPayments() {
   return useQuery({ queryKey: portalKeys.payments(), queryFn: portalApi.getPayments });
+}
+
+export function usePortalUpdateProfile() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: PortalProfilePayload) => portalApi.updateProfile(payload),
+    onSuccess: (customer) => {
+      usePortalAuthStore.getState().updateCustomer(customer);
+      queryClient.invalidateQueries({ queryKey: portalKeys.all });
+      toast.success("Profile updated");
+    },
+    onError: (error) => toast.error(getApiErrorMessage(error, "Failed to update profile")),
+  });
 }
 
 export function usePortalPay() {

@@ -19,6 +19,14 @@ export interface PortalCredentials {
   password: string;
 }
 
+/** Self-service profile edit (phone is read-only). */
+export interface PortalProfilePayload {
+  name?: string;
+  email?: string | null;
+  address?: string | null;
+  area?: string | null;
+}
+
 export interface PortalLoginResponse {
   token: string;
   customer: PortalCustomer;

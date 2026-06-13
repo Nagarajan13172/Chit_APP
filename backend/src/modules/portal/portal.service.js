@@ -32,6 +32,14 @@ export async function getProfile(customerId) {
   return toPublic(customer);
 }
 
+/** Member self-service profile update (name/email/address/area only). */
+export async function updateProfile(customerId, data) {
+  const existing = await prisma.customer.findUnique({ where: { id: customerId } });
+  if (!existing) throw ApiError.notFound("Customer not found");
+  const customer = await prisma.customer.update({ where: { id: customerId }, data });
+  return toPublic(customer);
+}
+
 /** Member dashboard: investment summary, per-chit progress, next due, recent payments. */
 export async function getDashboard(customerId) {
   const history = await collectionService.getCustomerHistory(customerId);

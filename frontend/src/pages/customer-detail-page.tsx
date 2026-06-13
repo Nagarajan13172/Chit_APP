@@ -1,4 +1,4 @@
-import { ArrowLeft, Pencil, Wallet } from "lucide-react";
+import { ArrowLeft, KeyRound, Pencil, Wallet } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { Link, useParams } from "react-router-dom";
 import { PageHeader } from "@/components/common/page-header";
@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CustomerFormDialog } from "@/features/customers/customer-form-dialog";
+import { PortalAccessDialog } from "@/features/customers/portal-access-dialog";
 import { useCustomer } from "@/features/customers/queries";
 import { formatDate } from "@/lib/format";
 
@@ -24,6 +25,7 @@ export function CustomerDetailPage() {
   const customerId = Number(id);
   const { data: customer, isLoading, isError } = useCustomer(customerId);
   const [editOpen, setEditOpen] = useState(false);
+  const [portalOpen, setPortalOpen] = useState(false);
 
   const backButton = (
     <Button asChild variant="ghost" size="sm" className="mb-2 -ml-2 w-fit text-muted-foreground">
@@ -76,6 +78,10 @@ export function CustomerDetailPage() {
             Collections
           </Link>
         </Button>
+        <Button variant="outline" onClick={() => setPortalOpen(true)}>
+          <KeyRound className="size-4" />
+          {customer.portalEnabled ? "Portal access" : "Enable portal"}
+        </Button>
         <Button variant="outline" onClick={() => setEditOpen(true)}>
           <Pencil className="size-4" />
           Edit
@@ -102,6 +108,13 @@ export function CustomerDetailPage() {
               )}
             </Field>
             <Field label="Memberships">{customer._count?.memberships ?? 0}</Field>
+            <Field label="Portal access">
+              {customer.portalEnabled ? (
+                <Badge className="border-transparent bg-emerald-600 font-normal text-white">Enabled</Badge>
+              ) : (
+                <Badge variant="secondary" className="font-normal">Not enabled</Badge>
+              )}
+            </Field>
             <Field label="Created">{formatDate(customer.createdAt)}</Field>
             <Field label="Updated">{formatDate(customer.updatedAt)}</Field>
             <div className="sm:col-span-2 lg:col-span-3">
@@ -112,6 +125,14 @@ export function CustomerDetailPage() {
       </Card>
 
       <CustomerFormDialog open={editOpen} onOpenChange={setEditOpen} customer={customer} />
+      <PortalAccessDialog
+        open={portalOpen}
+        onOpenChange={setPortalOpen}
+        customerId={customer.id}
+        customerName={customer.name}
+        customerPhone={customer.phone}
+        alreadyEnabled={Boolean(customer.portalEnabled)}
+      />
     </div>
   );
 }

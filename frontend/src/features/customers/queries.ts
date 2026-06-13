@@ -66,6 +66,19 @@ export function useCreateCustomer() {
   });
 }
 
+export function useSetPortalPassword(id: number) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (password: string) => customersApi.setPortalPassword(id, password),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: customerKeys.detail(id) });
+      queryClient.invalidateQueries({ queryKey: customerKeys.lists() });
+      toast.success("Portal access updated");
+    },
+    onError: (error) => toast.error(getApiErrorMessage(error, "Failed to set portal password")),
+  });
+}
+
 export function useUpdateCustomer(id: number) {
   const queryClient = useQueryClient();
   return useMutation({

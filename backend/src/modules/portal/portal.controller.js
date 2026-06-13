@@ -11,6 +11,11 @@ export const me = asyncHandler(async (req, res) => {
   res.json({ success: true, data: customer });
 });
 
+export const updateProfile = asyncHandler(async (req, res) => {
+  const customer = await portalService.updateProfile(req.customer.id, req.body);
+  res.json({ success: true, message: "Profile updated", data: customer });
+});
+
 export const dashboard = asyncHandler(async (req, res) => {
   const data = await portalService.getDashboard(req.customer.id);
   res.json({ success: true, data });

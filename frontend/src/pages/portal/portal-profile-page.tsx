@@ -1,7 +1,10 @@
-import type { ReactNode } from "react";
+import { Pencil } from "lucide-react";
+import { useState, type ReactNode } from "react";
 import { PageHeader } from "@/components/common/page-header";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { PortalProfileDialog } from "@/features/portal/portal-profile-dialog";
 import { usePortalCustomer } from "@/hooks/use-portal-auth";
 import { avatarTint, initials } from "@/lib/avatar";
 import { cn } from "@/lib/utils";
@@ -17,11 +20,17 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
 
 export function PortalProfilePage() {
   const customer = usePortalCustomer();
+  const [editOpen, setEditOpen] = useState(false);
   if (!customer) return null;
 
   return (
     <>
-      <PageHeader title="Profile" description="Your account details." />
+      <PageHeader title="Profile" description="Your account details.">
+        <Button variant="outline" onClick={() => setEditOpen(true)}>
+          <Pencil className="size-4" />
+          Edit profile
+        </Button>
+      </PageHeader>
       <Card>
         <CardContent className="p-6">
           <div className="mb-6 flex items-center gap-4">
@@ -44,10 +53,12 @@ export function PortalProfilePage() {
             <Field label="Address">{customer.address ?? "—"}</Field>
           </dl>
           <p className="mt-6 text-xs text-muted-foreground">
-            To update your details, please contact your agent.
+            Your phone number is your login and is managed by your agent.
           </p>
         </CardContent>
       </Card>
+
+      <PortalProfileDialog open={editOpen} onOpenChange={setEditOpen} customer={customer} />
     </>
   );
 }

@@ -5,10 +5,18 @@ import { startOfBusinessDay } from "../../utils/businessTime.js";
 
 const round2 = (n) => Math.round((Number(n) + Number.EPSILON) * 100) / 100;
 
+/** Never leak the password hash; expose a portalEnabled flag instead. */
+function toPublicCustomer(customer) {
+  if (!customer) return customer;
+  const { passwordHash, ...rest } = customer;
+  return { ...rest, portalEnabled: Boolean(passwordHash) };
+}
+
 export async function createCustomer(data, userId) {
-  return prisma.customer.create({
+  const customer = await prisma.customer.create({
     data: { ...data, createdBy: userId },
   });
+  return toPublicCustomer(customer);
 }
 
 export async function updateCustomer(id, data) {
@@ -17,7 +25,8 @@ export async function updateCustomer(id, data) {
   if (!existing) {
     throw ApiError.notFound("Customer not found");
   }
-  return prisma.customer.update({ where: { id }, data });
+  const updated = await prisma.customer.update({ where: { id }, data });
+  return toPublicCustomer(updated);
 }
 
 export async function listCustomers({ page, limit, search, area, planId, status, withSummary, sortBy, sortOrder }) {
@@ -68,7 +77,9 @@ export async function listCustomers({ page, limit, search, area, planId, status,
     prisma.customer.findMany({ where, skip, take: limit, orderBy: { [sortBy]: sortOrder }, include }),
   ]);
 
-  const data = wantSummary ? customers.map((c) => withCustomerSummary(c, today)) : customers;
+  const data = wantSummary
+    ? customers.map((c) => withCustomerSummary(c, today))
+    : customers.map(toPublicCustomer);
 
   return {
     data,
@@ -78,7 +89,7 @@ export async function listCustomers({ page, limit, search, area, planId, status,
 
 /** Collapse a customer's memberships → a flat financial summary for the list view. */
 function withCustomerSummary(customer, today) {
-  const { memberships, ...rest } = customer;
+  const { memberships, passwordHash, ...rest } = customer;
   let totalValue = 0;
   let totalDue = 0;
   let amountPaid = 0;
@@ -95,6 +106,7 @@ function withCustomerSummary(customer, today) {
 
   return {
     ...rest,
+    portalEnabled: Boolean(passwordHash),
     summary: {
       groupName: memberships[0]?.plan.name ?? null,
       groupCount: memberships.length,
@@ -109,11 +121,12 @@ function withCustomerSummary(customer, today) {
 
 export async function searchByPhone(phone) {
   // Capped result set — a phone lookup, not a bulk export endpoint.
-  return prisma.customer.findMany({
+  const customers = await prisma.customer.findMany({
     where: { phone: { contains: phone } },
     orderBy: { name: "asc" },
     take: 25,
   });
+  return customers.map(toPublicCustomer);
 }
 
 /** Set/replace a customer's self-service portal password (staff action). */
@@ -133,5 +146,5 @@ export async function getCustomerById(id) {
   if (!customer) {
     throw ApiError.notFound("Customer not found");
   }
-  return customer;
+  return toPublicCustomer(customer);
 }
