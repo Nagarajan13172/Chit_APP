@@ -1,0 +1,14 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "Chit DB",
+      "Group": "Servers",
+      "Host": "postgres",
+      "Port": 5432,
+      "MaintenanceDB": "chit_db",
+      "Username": "chit_user",
+      "SSLMode": "prefer",
+      "Comment": "Chit Collection Management System database"
+    }
+  }
+}
