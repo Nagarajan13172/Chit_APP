@@ -129,7 +129,15 @@ export function CustomerFormDialog({ open, onOpenChange, customer }: CustomerFor
                   <FormItem>
                     <FormLabel>Phone</FormLabel>
                     <FormControl>
-                      <Input inputMode="numeric" placeholder="10-digit number" {...field} />
+                      <Input
+                        inputMode="numeric"
+                        maxLength={10}
+                        placeholder="10-digit number"
+                        {...field}
+                        onChange={(e) =>
+                          field.onChange(e.target.value.replace(/\D/g, "").slice(0, 10))
+                        }
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

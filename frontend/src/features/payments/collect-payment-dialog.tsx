@@ -34,7 +34,7 @@ import {
 } from "./payment-schema";
 import { useRecordPayment } from "./queries";
 
-const PAYMENT_FIELDS = ["amount", "lateFee", "mode", "referenceNumber", "notes"] as const;
+const PAYMENT_FIELDS = ["amount", "mode", "referenceNumber", "notes"] as const;
 
 const MODES: { value: PaymentMode; label: string; icon: typeof Banknote }[] = [
   { value: "CASH", label: "Cash", icon: Banknote },
@@ -70,8 +70,10 @@ export function CollectPaymentDialog({
   }, [open, installment.id, installment.pending]);
 
   const amountNum = Number(form.watch("amount")) || 0;
-  const lateFeeNum = Number(form.watch("lateFee")) || 0;
-  const totalCollected = Math.round((amountNum + lateFeeNum) * 100) / 100;
+  const totalCollected = Math.round(amountNum * 100) / 100;
+
+  // Reference number only applies to digital payments (UPI / Cheque), not Cash.
+  const needsReference = form.watch("mode") !== "CASH";
 
   const onSubmit = (values: PaymentFormValues) => {
     recordMutation.mutate(toPaymentPayload(values, installment.id), {
@@ -125,7 +127,10 @@ export function CollectPaymentDialog({
                         <button
                           key={m.value}
                           type="button"
-                          onClick={() => field.onChange(m.value)}
+                          onClick={() => {
+                            field.onChange(m.value);
+                            if (m.value === "CASH") form.setValue("referenceNumber", "");
+                          }}
                           className={cn(
                             "flex items-center justify-between rounded-lg border p-3 text-sm transition-colors",
                             active
@@ -154,49 +159,36 @@ export function CollectPaymentDialog({
               )}
             />
 
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="amount"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Amount (₹)</FormLabel>
-                    <FormControl>
-                      <Input inputMode="decimal" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="lateFee"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Late Fee (₹)</FormLabel>
-                    <FormControl>
-                      <Input inputMode="decimal" placeholder="0" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
             <FormField
               control={form.control}
-              name="referenceNumber"
+              name="amount"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Transaction ID / Reference Number</FormLabel>
+                  <FormLabel>Amount (₹)</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter ID for digital payments" {...field} />
+                    <Input inputMode="decimal" {...field} />
                   </FormControl>
-                  <FormDescription>Required for UPI and Cheque payments.</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
+
+            {needsReference && (
+              <FormField
+                control={form.control}
+                name="referenceNumber"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Transaction ID / Reference Number</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Enter ID for digital payments" {...field} />
+                    </FormControl>
+                    <FormDescription>Required for UPI and Cheque payments.</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
 
             <FormField
               control={form.control}
@@ -221,10 +213,6 @@ export function CollectPaymentDialog({
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Installment Amount</span>
                   <span className="tabular-nums">{formatCurrency(amountNum, 2)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Late Fee (if any)</span>
-                  <span className="tabular-nums">{formatCurrency(lateFeeNum, 2)}</span>
                 </div>
                 <Separator className="my-1" />
                 <div className="flex justify-between text-base font-bold">

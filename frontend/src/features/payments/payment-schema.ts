@@ -21,10 +21,6 @@ export function createPaymentFormSchema(pending: number) {
         .refine((v) => Number(v) > 0, "Amount must be greater than 0")
         .refine(twoDecimals, "At most 2 decimal places")
         .refine((v) => Number(v) <= pending + 1e-9, `Amount can't exceed the pending ₹${pending}`),
-      lateFee: z
-        .string()
-        .trim()
-        .refine((v) => v === "" || (Number(v) >= 0 && twoDecimals(v)), "Late fee must be 0 or more (max 2 dp)"),
       mode: z.enum(["CASH", "UPI", "CHEQUE"]),
       referenceNumber: z.string().trim().max(100, "Reference is too long"),
       notes: z.string().trim().max(500, "Notes are too long"),
@@ -45,7 +41,6 @@ export type PaymentFormValues = z.infer<ReturnType<typeof createPaymentFormSchem
 export function paymentFormDefaults(pending: number): PaymentFormValues {
   return {
     amount: pending > 0 ? String(pending) : "",
-    lateFee: "",
     mode: "CASH" as PaymentMode,
     referenceNumber: "",
     notes: "",
@@ -59,7 +54,6 @@ export function toPaymentPayload(
   return {
     installmentId,
     amount: Number(values.amount),
-    lateFee: values.lateFee.trim() ? Number(values.lateFee) : 0,
     mode: values.mode,
     referenceNumber: values.referenceNumber.trim() || undefined,
     notes: values.notes.trim() || undefined,
