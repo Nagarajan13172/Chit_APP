@@ -35,6 +35,12 @@ export async function createPlan(payload: PlanPayload): Promise<ChitPlan> {
   return data.data;
 }
 
+/** PUT /plans/:id — update plan details (ADMIN only). */
+export async function updatePlan(id: number, payload: Partial<PlanPayload>): Promise<ChitPlan> {
+  const { data } = await api.put<ApiSuccess<ChitPlan>>(`/plans/${id}`, payload);
+  return data.data;
+}
+
 /** PATCH /plans/:id/status — close or reopen a plan (ADMIN only). */
 export async function updatePlanStatus(id: number, status: PlanStatus): Promise<ChitPlan> {
   const { data } = await api.patch<ApiSuccess<ChitPlan>>(`/plans/${id}/status`, { status });

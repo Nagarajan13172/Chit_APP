@@ -61,6 +61,19 @@ export function useCreatePlan() {
   });
 }
 
+export function useUpdatePlan(planId: number) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: Partial<PlanPayload>) => plansApi.updatePlan(planId, payload),
+    onSuccess: (plan) => {
+      queryClient.invalidateQueries({ queryKey: planKeys.all });
+      queryClient.setQueryData(planKeys.detail(planId), plan);
+      toast.success(`Plan "${plan.name}" updated`);
+    },
+    onError: (error) => toast.error(getApiErrorMessage(error, "Failed to update plan")),
+  });
+}
+
 export function useUpdatePlanStatus(planId: number) {
   const queryClient = useQueryClient();
   return useMutation({

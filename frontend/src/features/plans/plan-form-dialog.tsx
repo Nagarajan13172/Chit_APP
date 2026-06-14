@@ -1,5 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { DatePicker } from "@/components/common/date-picker";
@@ -30,13 +31,15 @@ import {
 } from "@/components/ui/select";
 import { applyServerFieldErrors } from "@/lib/form-errors";
 import { formatCurrency } from "@/lib/format";
+import type { ChitPlan } from "@/types/plan";
 import {
   planFormDefaults,
   planFormSchema,
+  toFormValues,
   toPlanPayload,
   type PlanFormValues,
 } from "./plan-schema";
-import { useCreatePlan } from "./queries";
+import { useCreatePlan, useUpdatePlan } from "./queries";
 
 const PLAN_FIELDS = [
   "name",
@@ -51,22 +54,37 @@ const PLAN_FIELDS = [
 interface PlanFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** Pass a plan to edit; omit to create. */
+  plan?: ChitPlan | null;
 }
 
-export function PlanFormDialog({ open, onOpenChange }: PlanFormDialogProps) {
+export function PlanFormDialog({ open, onOpenChange, plan }: PlanFormDialogProps) {
+  const isEdit = Boolean(plan);
+  const memberCount = plan?._count?.memberships ?? 0;
+  // Financial/structural terms are locked once members are assigned (the backend
+  // enforces this too, since each membership has a generated installment schedule).
+  const termsLocked = isEdit && memberCount > 0;
+
   const form = useForm<PlanFormValues>({
     resolver: zodResolver(planFormSchema),
     defaultValues: planFormDefaults,
   });
 
   const createMutation = useCreatePlan();
+  const updateMutation = useUpdatePlan(plan?.id ?? 0);
+  const isPending = createMutation.isPending || updateMutation.isPending;
+
+  // Reset to the right values whenever the dialog opens or the target changes.
+  useEffect(() => {
+    if (open) {
+      form.reset(plan ? toFormValues(plan) : planFormDefaults);
+    }
+  }, [open, plan, form]);
 
   const onSubmit = (values: PlanFormValues) => {
-    createMutation.mutate(toPlanPayload(values), {
-      onSuccess: () => {
-        onOpenChange(false);
-        form.reset(planFormDefaults);
-      },
+    const mutation = isEdit ? updateMutation : createMutation;
+    mutation.mutate(toPlanPayload(values), {
+      onSuccess: () => onOpenChange(false),
       onError: (error) => applyServerFieldErrors(error, form.setError, PLAN_FIELDS),
     });
   };
@@ -80,18 +98,14 @@ export function PlanFormDialog({ open, onOpenChange }: PlanFormDialogProps) {
       : null;
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(next) => {
-        if (!next) form.reset(planFormDefaults);
-        onOpenChange(next);
-      }}
-    >
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Create chit plan</DialogTitle>
+          <DialogTitle>{isEdit ? "Edit chit plan" : "Create chit plan"}</DialogTitle>
           <DialogDescription>
-            Define the plan. The installment defaults to chit value ÷ duration when left blank.
+            {termsLocked
+              ? `This plan has ${memberCount} member(s). Chit value, installment, duration and start date are locked; you can still rename it, change its status, or raise the member cap.`
+              : "Define the plan. The installment defaults to chit value ÷ duration when left blank."}
           </DialogDescription>
         </DialogHeader>
 
@@ -119,7 +133,7 @@ export function PlanFormDialog({ open, onOpenChange }: PlanFormDialogProps) {
                   <FormItem>
                     <FormLabel>Chit value (₹)</FormLabel>
                     <FormControl>
-                      <Input inputMode="decimal" placeholder="100000" {...field} />
+                      <Input inputMode="decimal" placeholder="100000" disabled={termsLocked} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -134,7 +148,7 @@ export function PlanFormDialog({ open, onOpenChange }: PlanFormDialogProps) {
                       Installment (₹) <span className="text-muted-foreground">(optional)</span>
                     </FormLabel>
                     <FormControl>
-                      <Input inputMode="decimal" placeholder="Auto" {...field} />
+                      <Input inputMode="decimal" placeholder="Auto" disabled={termsLocked} {...field} />
                     </FormControl>
                     {derivedInstallment !== null && !field.value ? (
                       <FormDescription>Defaults to {formatCurrency(derivedInstallment, 2)}</FormDescription>
@@ -150,7 +164,7 @@ export function PlanFormDialog({ open, onOpenChange }: PlanFormDialogProps) {
                   <FormItem>
                     <FormLabel>Duration (months)</FormLabel>
                     <FormControl>
-                      <Input inputMode="numeric" placeholder="20" {...field} />
+                      <Input inputMode="numeric" placeholder="20" disabled={termsLocked} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -165,6 +179,9 @@ export function PlanFormDialog({ open, onOpenChange }: PlanFormDialogProps) {
                     <FormControl>
                       <Input inputMode="numeric" placeholder="20" {...field} />
                     </FormControl>
+                    {termsLocked ? (
+                      <FormDescription>Cannot be below {memberCount} already assigned.</FormDescription>
+                    ) : null}
                     <FormMessage />
                   </FormItem>
                 )}
@@ -175,7 +192,7 @@ export function PlanFormDialog({ open, onOpenChange }: PlanFormDialogProps) {
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
                     <FormLabel>Start date</FormLabel>
-                    <DatePicker value={field.value} onChange={field.onChange} />
+                    <DatePicker value={field.value} onChange={field.onChange} disabled={termsLocked} />
                     <FormMessage />
                   </FormItem>
                 )}
@@ -208,13 +225,13 @@ export function PlanFormDialog({ open, onOpenChange }: PlanFormDialogProps) {
                 type="button"
                 variant="outline"
                 onClick={() => onOpenChange(false)}
-                disabled={createMutation.isPending}
+                disabled={isPending}
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={createMutation.isPending}>
-                {createMutation.isPending ? <Loader2 className="size-4 animate-spin" /> : null}
-                Create plan
+              <Button type="submit" disabled={isPending}>
+                {isPending ? <Loader2 className="size-4 animate-spin" /> : null}
+                {isEdit ? "Save changes" : "Create plan"}
               </Button>
             </DialogFooter>
           </form>

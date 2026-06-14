@@ -16,6 +16,11 @@ export const getById = asyncHandler(async (req, res) => {
   res.json({ success: true, data: plan });
 });
 
+export const update = asyncHandler(async (req, res) => {
+  const plan = await planService.updatePlan(req.params.id, req.body);
+  res.json({ success: true, message: "Chit plan updated", data: plan });
+});
+
 export const updateStatus = asyncHandler(async (req, res) => {
   const plan = await planService.updatePlanStatus(req.params.id, req.body.status);
   const verb = req.body.status === "CLOSED" ? "closed" : "reopened";

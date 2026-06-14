@@ -18,6 +18,12 @@ export const createPlanSchema = z.object({
   status: z.enum(["ACTIVE", "CLOSED"]).default("ACTIVE"),
 });
 
+// Partial of createPlanSchema — any subset of fields may be updated. The service
+// enforces that financial/structural terms stay locked once members are assigned.
+export const updatePlanSchema = createPlanSchema
+  .partial()
+  .refine((obj) => Object.keys(obj).length > 0, { message: "At least one field must be provided" });
+
 export const listPlansQuerySchema = z.object({
   page: blankToUndefined(z.coerce.number().int().min(1).default(1)),
   limit: blankToUndefined(z.coerce.number().int().min(1).max(100).default(10)),

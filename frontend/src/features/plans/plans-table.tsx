@@ -1,6 +1,13 @@
-import { Eye } from "lucide-react";
+import { Eye, MoreHorizontal, Pencil } from "lucide-react";
+import { RoleGuard } from "@/components/auth/role-guard";
 import { SortableHeader } from "@/components/common/sortable-header";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -23,6 +30,7 @@ interface PlansTableProps {
   sortOrder: SortOrder;
   onSort: (column: PlanSortBy) => void;
   onView: (id: number) => void;
+  onEdit: (plan: ChitPlan) => void;
   rowCount?: number;
 }
 
@@ -36,6 +44,7 @@ export function PlansTable({
   sortOrder,
   onSort,
   onView,
+  onEdit,
   rowCount = 10,
 }: PlansTableProps) {
   return (
@@ -113,16 +122,26 @@ export function PlansTable({
                 <TableCell>
                   <PlanStatusBadge status={plan.status} />
                 </TableCell>
-                <TableCell>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="size-8"
-                    aria-label="View plan"
-                    onClick={() => onView(plan.id)}
-                  >
-                    <Eye className="size-4" />
-                  </Button>
+                <TableCell className="text-right">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="size-8" aria-label="Row actions">
+                        <MoreHorizontal className="size-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => onView(plan.id)}>
+                        <Eye className="mr-2 size-4" />
+                        View
+                      </DropdownMenuItem>
+                      <RoleGuard roles={["ADMIN"]}>
+                        <DropdownMenuItem onClick={() => onEdit(plan)}>
+                          <Pencil className="mr-2 size-4" />
+                          Edit
+                        </DropdownMenuItem>
+                      </RoleGuard>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </TableCell>
               </TableRow>
             ))

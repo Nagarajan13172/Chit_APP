@@ -19,6 +19,64 @@ export async function createPlan(data) {
   });
 }
 
+/**
+ * Update a chit plan. Name, total members and status can always change.
+ * The financial/structural terms (chit value, installment, duration, start date)
+ * are locked once members are assigned, because each membership already has a
+ * generated installment schedule derived from them — changing them would silently
+ * desync those schedules. Total members can never drop below the assigned count.
+ */
+export async function updatePlan(id, data) {
+  const existing = await prisma.chitPlan.findUnique({
+    where: { id },
+    include: { _count: { select: { memberships: true } } },
+  });
+  if (!existing) throw ApiError.notFound("Chit plan not found");
+
+  const memberCount = existing._count.memberships;
+
+  if (data.totalMembers != null && data.totalMembers < memberCount) {
+    throw ApiError.badRequest(
+      `Total members cannot be below the ${memberCount} member(s) already assigned`
+    );
+  }
+
+  const update = {};
+  if (data.name != null) update.name = data.name;
+  if (data.totalMembers != null) update.totalMembers = data.totalMembers;
+  if (data.status != null) update.status = data.status;
+
+  if (memberCount === 0) {
+    if (data.chitValue != null) update.chitValue = data.chitValue;
+    if (data.durationMonths != null) update.durationMonths = data.durationMonths;
+    if (data.startDate != null) update.startDate = data.startDate;
+    // Re-derive the installment when omitted (mirrors createPlan).
+    const chitValue = data.chitValue ?? Number(existing.chitValue);
+    const durationMonths = data.durationMonths ?? existing.durationMonths;
+    update.installmentAmount =
+      data.installmentAmount ?? Number((Number(chitValue) / durationMonths).toFixed(2));
+  } else {
+    const lockedChanged =
+      (data.chitValue != null && Number(data.chitValue) !== Number(existing.chitValue)) ||
+      (data.installmentAmount != null &&
+        Number(data.installmentAmount) !== Number(existing.installmentAmount)) ||
+      (data.durationMonths != null && data.durationMonths !== existing.durationMonths) ||
+      (data.startDate != null &&
+        new Date(data.startDate).getTime() !== new Date(existing.startDate).getTime());
+    if (lockedChanged) {
+      throw ApiError.badRequest(
+        "Chit value, installment, duration and start date cannot be changed after members are assigned"
+      );
+    }
+  }
+
+  return prisma.chitPlan.update({
+    where: { id },
+    data: update,
+    include: { _count: { select: { memberships: true } } },
+  });
+}
+
 export async function listPlans({ page, limit, search, status, sortBy, sortOrder }) {
   const where = {};
   if (search) where.name = { contains: search, mode: "insensitive" };

@@ -1,6 +1,6 @@
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { z } from "zod";
-import type { PlanPayload } from "@/types/plan";
+import type { ChitPlan, PlanPayload } from "@/types/plan";
 
 const isFinitePositive = (v: string) => {
   const n = Number(v);
@@ -56,6 +56,19 @@ export const planFormDefaults = {
   totalMembers: "",
   status: "ACTIVE",
 } as const;
+
+/** Pre-fill the form when editing an existing plan (numeric fields back to strings). */
+export function toFormValues(plan: ChitPlan): PlanFormValues {
+  return {
+    name: plan.name,
+    chitValue: String(plan.chitValue),
+    installmentAmount: String(plan.installmentAmount),
+    durationMonths: String(plan.durationMonths),
+    totalMembers: String(plan.totalMembers),
+    startDate: parseISO(plan.startDate),
+    status: plan.status,
+  };
+}
 
 export function toPlanPayload(values: PlanFormValues): PlanPayload {
   return {

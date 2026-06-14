@@ -2,6 +2,7 @@ import { Router } from "express";
 import * as planController from "./plan.controller.js";
 import {
   createPlanSchema,
+  updatePlanSchema,
   listPlansQuerySchema,
   assignMemberSchema,
   updatePlanStatusSchema,
@@ -28,6 +29,15 @@ router.post(
   validate(idParamSchema, "params"),
   validate(assignMemberSchema),
   planController.assignMember
+);
+
+// Update plan details — ADMIN only
+router.put(
+  "/:id",
+  authorize("ADMIN"),
+  validate(idParamSchema, "params"),
+  validate(updatePlanSchema),
+  planController.update
 );
 
 // Close / reopen a plan — ADMIN only

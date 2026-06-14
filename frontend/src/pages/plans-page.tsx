@@ -17,7 +17,7 @@ import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { PlanFormDialog } from "@/features/plans/plan-form-dialog";
 import { PlansTable } from "@/features/plans/plans-table";
 import { usePlans } from "@/features/plans/queries";
-import type { PlanListParams, PlanSortBy, PlanStatus } from "@/types/plan";
+import type { ChitPlan, PlanListParams, PlanSortBy, PlanStatus } from "@/types/plan";
 import type { SortOrder } from "@/types/common";
 
 const PAGE_SIZE = 10;
@@ -80,6 +80,15 @@ export function PlansPage() {
   const pagination = data?.pagination;
 
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editing, setEditing] = useState<ChitPlan | null>(null);
+  const openCreate = () => {
+    setEditing(null);
+    setDialogOpen(true);
+  };
+  const openEdit = (plan: ChitPlan) => {
+    setEditing(plan);
+    setDialogOpen(true);
+  };
 
   const handleSort = (column: PlanSortBy) => {
     if (column === sortBy) {
@@ -102,7 +111,7 @@ export function PlansPage() {
     <>
       <PageHeader title="Chit Plans" description="Create plans and assign members.">
         <RoleGuard roles={["ADMIN"]}>
-          <Button onClick={() => setDialogOpen(true)}>
+          <Button onClick={openCreate}>
             <Plus className="size-4" />
             Create plan
           </Button>
@@ -156,6 +165,7 @@ export function PlansPage() {
           sortOrder={sortOrder}
           onSort={handleSort}
           onView={openView}
+          onEdit={openEdit}
           rowCount={PAGE_SIZE}
         />
 
@@ -171,7 +181,7 @@ export function PlansPage() {
         ) : null}
       </div>
 
-      <PlanFormDialog open={dialogOpen} onOpenChange={setDialogOpen} />
+      <PlanFormDialog open={dialogOpen} onOpenChange={setDialogOpen} plan={editing} />
 
       {/* Detail side sheet (nested route /plans/:id) */}
       <Suspense fallback={null}>
