@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -14,6 +15,7 @@ import {
 } from "@/components/ui/sidebar";
 import { navItemsForRole } from "@/config/nav";
 import { useAuthStore } from "@/store/auth.store";
+import { UserMenu } from "./user-menu";
 
 /** Returns true when `pathname` is the active route for a nav item. */
 function isActivePath(pathname: string, to: string, end?: boolean): boolean {
@@ -63,6 +65,10 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+
+      <SidebarFooter>
+        <UserMenu />
+      </SidebarFooter>
 
       <SidebarRail />
     </Sidebar>

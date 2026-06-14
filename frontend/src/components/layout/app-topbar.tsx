@@ -2,11 +2,11 @@ import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { Breadcrumbs } from "./breadcrumbs";
-import { UserMenu } from "./user-menu";
 
 /**
  * Top navigation bar: sidebar toggle + breadcrumbs on the left,
- * theme switch + account menu on the right.
+ * theme switch on the right. The account profile now lives at the
+ * bottom of the sidebar.
  */
 export function AppTopbar() {
   return (
@@ -16,7 +16,6 @@ export function AppTopbar() {
       <Breadcrumbs />
       <div className="ml-auto flex items-center gap-1">
         <ThemeToggle />
-        <UserMenu />
       </div>
     </header>
   );
