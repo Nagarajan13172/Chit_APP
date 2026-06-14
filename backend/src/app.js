@@ -28,9 +28,9 @@ app.use(helmet());
 app.use(cors({ origin: corsOrigin, credentials: true }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-if (env.nodeEnv === "development") {
-  app.use(morgan("dev"));
-}
+// HTTP request logging for every route. Use the verbose "combined" (Apache-style)
+// format in production for ops/audit, and the concise coloured "dev" format locally.
+app.use(morgan(env.nodeEnv === "production" ? "combined" : "dev"));
 
 app.use("/api", apiRoutes);
 
