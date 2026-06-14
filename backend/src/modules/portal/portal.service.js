@@ -96,6 +96,14 @@ export async function getDashboard(customerId) {
   }
   recentPayments.sort((a, b) => new Date(b.paidAt) - new Date(a.paidAt));
 
+  // Total still owed on installments whose due date has already passed.
+  const overdueAmount = round2(
+    history.memberships
+      .flatMap((m) => m.installments)
+      .filter((i) => i.isOverdue)
+      .reduce((s, i) => s + i.pending, 0),
+  );
+
   return {
     customer: history.customer,
     summary: {
@@ -103,6 +111,7 @@ export async function getDashboard(customerId) {
       totalValue: history.summary.totalDue,
       totalPending: history.summary.totalPending,
       overdueCount: history.summary.overdueCount,
+      overdueAmount,
       activeChits: history.memberships.filter((m) => m.status === "ACTIVE").length,
     },
     nextDue,

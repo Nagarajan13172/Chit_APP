@@ -15,3 +15,8 @@ export const pending = asyncHandler(async (req, res) => {
   const result = await reportService.getPendingReport(req.query);
   res.json({ success: true, data: result.data, pagination: result.pagination });
 });
+
+export const reminders = asyncHandler(async (req, res) => {
+  const data = await reportService.getReminders(req.query);
+  res.json({ success: true, data });
+});

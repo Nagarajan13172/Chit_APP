@@ -1,5 +1,6 @@
 import { format } from "date-fns";
 import {
+  AlertTriangle,
   Bell,
   CalendarClock,
   CheckCircle2,
@@ -8,7 +9,7 @@ import {
   TrendingUp,
   Wallet,
 } from "lucide-react";
-import { useState, type ComponentType } from "react";
+import { useEffect, useRef, useState, type ComponentType } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -76,6 +77,20 @@ export function PortalDashboardPage() {
   };
   const payingId = payMutation.isPending ? payMutation.variables : null;
 
+  // Alert the member once per visit when they have past-due installments.
+  const overdueToastShown = useRef(false);
+  useEffect(() => {
+    if (data && data.summary.overdueCount > 0 && !overdueToastShown.current) {
+      overdueToastShown.current = true;
+      const { overdueCount, overdueAmount } = data.summary;
+      toast.error(
+        `You have ${overdueCount} overdue payment${overdueCount === 1 ? "" : "s"} totaling ${formatCurrency(
+          overdueAmount,
+        )}.`,
+      );
+    }
+  }, [data]);
+
   if (isLoading || !data) {
     return (
       <div className="space-y-6">
@@ -104,6 +119,33 @@ export function PortalDashboardPage() {
           Join New Chit
         </Button>
       </div>
+
+      {summary.overdueCount > 0 ? (
+        <div className="mb-6 flex flex-col gap-3 rounded-xl border border-destructive/30 bg-destructive/10 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="size-5 shrink-0 text-destructive" />
+            <div>
+              <p className="font-semibold text-destructive">
+                {summary.overdueCount} overdue payment{summary.overdueCount === 1 ? "" : "s"}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                {formatCurrency(summary.overdueAmount)} is past its due date. Please pay to avoid penalties.
+              </p>
+            </div>
+          </div>
+          {nextDue ? (
+            <Button
+              variant="destructive"
+              onClick={() => handlePay(nextDue.membershipId)}
+              disabled={payMutation.isPending}
+              className="sm:shrink-0"
+            >
+              {payingId === nextDue.membershipId ? <Loader2 className="size-4 animate-spin" /> : null}
+              Pay Now
+            </Button>
+          ) : null}
+        </div>
+      ) : null}
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Kpi

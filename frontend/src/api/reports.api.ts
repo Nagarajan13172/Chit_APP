@@ -5,6 +5,7 @@ import type {
   CollectionsReportParams,
   PendingReportParams,
   PendingReportResponse,
+  RemindersReport,
   ReportSummary,
 } from "@/types/report";
 
@@ -26,4 +27,10 @@ export async function getCollectionsReport(
 export async function getPendingReport(params: PendingReportParams): Promise<PendingReportResponse> {
   const { data } = await api.get<PendingReportResponse>("/reports/pending", { params });
   return data;
+}
+
+/** GET /reports/reminders — installments due soon (today/tomorrow) and overdue. */
+export async function getReminders(params: { planId?: number } = {}): Promise<RemindersReport> {
+  const { data } = await api.get<ApiSuccess<RemindersReport>>("/reports/reminders", { params });
+  return data.data;
 }

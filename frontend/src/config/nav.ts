@@ -1,5 +1,6 @@
 import {
   BarChart3,
+  BellRing,
   LayoutDashboard,
   Layers,
   Users,
@@ -27,6 +28,7 @@ export const NAV_ITEMS: NavItem[] = [
   { title: "Customers", to: "/customers", icon: Users },
   { title: "Chit Plans", to: "/plans", icon: Layers },
   { title: "Collections", to: "/collections", icon: Wallet },
+  { title: "Reminders", to: "/reminders", icon: BellRing },
   { title: "Reports", to: "/reports", icon: BarChart3 },
 ];
 

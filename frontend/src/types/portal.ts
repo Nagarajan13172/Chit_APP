@@ -72,6 +72,7 @@ export interface PortalDashboard {
     totalValue: number;
     totalPending: number;
     overdueCount: number;
+    overdueAmount: number;
     activeChits: number;
   };
   nextDue: (PortalNextDue & { membershipId: number; planName: string }) | null;

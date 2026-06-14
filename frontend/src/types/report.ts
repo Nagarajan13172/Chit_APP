@@ -64,3 +64,26 @@ export interface PendingReportItem {
 }
 
 export type PendingReportResponse = ListResponse<PendingReportItem>;
+
+/** One unpaid installment surfaced as a collection reminder (due soon or overdue). */
+export interface ReminderRow {
+  installmentId: number;
+  monthNumber: number;
+  dueDate: string;
+  /** Pending amount on this installment. */
+  pending: number;
+  /** today − dueDate in days: >0 overdue, 0 due today, −1 due tomorrow. */
+  daysOverdue: number;
+  membershipId: number;
+  ticketNumber: number | null;
+  customer: { id: number; name: string; phone: string; address: string | null; area: string | null };
+  plan: { id: number; name: string };
+}
+
+export interface RemindersReport {
+  counts: { dueSoon: number; overdue: number };
+  /** Due today or tomorrow, still unpaid. */
+  dueSoon: ReminderRow[];
+  /** Due date already passed, still unpaid. */
+  overdue: ReminderRow[];
+}

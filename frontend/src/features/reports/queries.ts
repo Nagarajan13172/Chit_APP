@@ -8,6 +8,7 @@ export const reportKeys = {
   collections: (params: CollectionsReportParams) =>
     [...reportKeys.all, "collections", params] as const,
   pending: (params: PendingReportParams) => [...reportKeys.all, "pending", params] as const,
+  reminders: () => [...reportKeys.all, "reminders"] as const,
 };
 
 export function useReportSummary() {
@@ -31,5 +32,13 @@ export function usePendingReport(params: PendingReportParams) {
     queryKey: reportKeys.pending(params),
     queryFn: () => reportsApi.getPendingReport(params),
     placeholderData: keepPreviousData,
+  });
+}
+
+export function useReminders() {
+  return useQuery({
+    queryKey: reportKeys.reminders(),
+    queryFn: () => reportsApi.getReminders(),
+    staleTime: 30_000,
   });
 }

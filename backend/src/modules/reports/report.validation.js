@@ -18,3 +18,7 @@ export const pendingReportSchema = z.object({
   limit: blankToUndefined(z.coerce.number().int().min(1).max(100).default(20)),
   planId: blankToUndefined(z.coerce.number().int().positive().optional()),
 });
+
+export const remindersReportSchema = z.object({
+  planId: blankToUndefined(z.coerce.number().int().positive().optional()),
+});

@@ -8,6 +8,7 @@ const round2 = (n) => Math.round((Number(n) + Number.EPSILON) * 100) / 100;
 // now() is timestamptz, so it only needs a single AT TIME ZONE conversion.
 const paidAtLocal = Prisma.sql`(p.paid_at AT TIME ZONE 'UTC') AT TIME ZONE ${env.businessTz}`;
 const todayLocal = Prisma.sql`(now() AT TIME ZONE ${env.businessTz})::date`;
+const tomorrowLocal = Prisma.sql`((now() AT TIME ZONE ${env.businessTz})::date + 1)`;
 
 /** Dashboard KPI cards: active customers/groups, this-month collections, pending & defaults. */
 export async function getSummary() {
@@ -106,6 +107,65 @@ export async function getCollectionsReport({ from, to, planId, mode, collectedBy
     byMode: byMode.map((r) => ({ mode: r.mode, amount: round2(r.amount), count: r.count })),
     byPlan: byPlan.map((r) => ({ planId: r.planId, planName: r.planName, amount: round2(r.amount), count: r.count })),
   };
+}
+
+/**
+ * Collection reminders for staff. Returns unpaid installments split into two buckets:
+ *   - dueSoon: due today or tomorrow (business tz) — "collect soon"
+ *   - overdue: due date already passed and still unpaid
+ * Each row carries the customer's name, address and the pending amount so the UI can
+ * alert agents with who to collect from and how much. Only ACTIVE plans are included
+ * (closed plans no longer accept collections). One query; bucketed in JS.
+ */
+export async function getReminders({ planId } = {}) {
+  const planFilter = planId ? Prisma.sql`AND m.chit_plan_id = ${planId}` : Prisma.empty;
+
+  const rows = await prisma.$queryRaw(Prisma.sql`
+    SELECT
+      i.id            AS "installmentId",
+      i.month_number  AS "monthNumber",
+      i.due_date      AS "dueDate",
+      (i.due_amount - COALESCE(paid.amt, 0))::float AS pending,
+      (${todayLocal} - i.due_date)::int             AS days_overdue,
+      m.id            AS "membershipId",
+      m.ticket_number AS "ticketNumber",
+      c.id            AS "customerId",
+      c.name          AS "customerName",
+      c.phone         AS phone,
+      c.address       AS address,
+      c.area          AS area,
+      cp.id           AS "planId",
+      cp.name         AS "planName",
+      CASE WHEN i.due_date < ${todayLocal} THEN 'OVERDUE' ELSE 'DUE_SOON' END AS bucket
+    FROM installments i
+    JOIN memberships m ON m.id = i.membership_id
+    JOIN customers c   ON c.id = m.customer_id
+    JOIN chit_plans cp ON cp.id = m.chit_plan_id
+    LEFT JOIN (SELECT installment_id, SUM(amount) AS amt FROM payments GROUP BY installment_id) paid
+      ON paid.installment_id = i.id
+    WHERE cp.status = 'ACTIVE'
+      AND i.due_date <= ${tomorrowLocal}
+      AND (i.due_amount - COALESCE(paid.amt, 0)) > 0
+      ${planFilter}
+    ORDER BY i.due_date ASC, pending DESC
+  `);
+
+  const toRow = (r) => ({
+    installmentId: r.installmentId,
+    monthNumber: r.monthNumber,
+    dueDate: r.dueDate,
+    pending: round2(r.pending),
+    daysOverdue: r.days_overdue,
+    membershipId: r.membershipId,
+    ticketNumber: r.ticketNumber,
+    customer: { id: r.customerId, name: r.customerName, phone: r.phone, address: r.address, area: r.area },
+    plan: { id: r.planId, name: r.planName },
+  });
+
+  const dueSoon = rows.filter((r) => r.bucket === "DUE_SOON").map(toRow);
+  const overdue = rows.filter((r) => r.bucket === "OVERDUE").map(toRow);
+
+  return { counts: { dueSoon: dueSoon.length, overdue: overdue.length }, dueSoon, overdue };
 }
 
 /** Pending collections report — memberships with outstanding dues, worst first. */

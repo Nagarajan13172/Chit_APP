@@ -1,4 +1,4 @@
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, BellRing } from "lucide-react";
 import { Link } from "react-router-dom";
 import { ErrorState } from "@/components/common/error-state";
 import { PageHeader } from "@/components/common/page-header";
@@ -9,7 +9,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { CollectionsByModeChart } from "@/features/reports/charts/collections-by-mode-chart";
 import { CollectionsByPlanChart } from "@/features/reports/charts/collections-by-plan-chart";
 import { DefaultersTable } from "@/features/reports/defaulters-table";
-import { useCollectionsReport, usePendingReport, useReportSummary } from "@/features/reports/queries";
+import {
+  useCollectionsReport,
+  usePendingReport,
+  useReminders,
+  useReportSummary,
+} from "@/features/reports/queries";
 import { useUser } from "@/hooks/use-auth";
 import { formatCurrency } from "@/lib/format";
 
@@ -20,9 +25,12 @@ export function DashboardPage() {
   const summaryQuery = useReportSummary();
   const collectionsQuery = useCollectionsReport({});
   const defaultersQuery = usePendingReport({ limit: 5 });
+  const remindersQuery = useReminders();
 
   const summary = summaryQuery.data;
   const collections = collectionsQuery.data;
+  const dueSoonCount = remindersQuery.data?.counts.dueSoon ?? 0;
+  const overdueCount = remindersQuery.data?.counts.overdue ?? 0;
 
   return (
     <>
@@ -30,6 +38,26 @@ export function DashboardPage() {
         title={`Welcome back, ${firstName}`}
         description="Your chit collection at a glance."
       />
+
+      {dueSoonCount > 0 || overdueCount > 0 ? (
+        <Link
+          to="/reminders"
+          className="mb-6 flex items-center gap-3 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm transition-colors hover:bg-amber-100 dark:border-amber-900 dark:bg-amber-950/40 dark:hover:bg-amber-950/60"
+        >
+          <BellRing className="size-5 shrink-0 text-amber-600 dark:text-amber-400" />
+          <span className="flex-1">
+            <span className="font-medium">Collections need attention.</span>{" "}
+            {dueSoonCount > 0 ? `${dueSoonCount} due today or tomorrow. ` : ""}
+            {overdueCount > 0 ? (
+              <span className="font-medium text-destructive">{overdueCount} overdue.</span>
+            ) : null}
+          </span>
+          <span className="flex shrink-0 items-center gap-1 font-medium text-amber-700 dark:text-amber-300">
+            View reminders
+            <ArrowRight className="size-4" />
+          </span>
+        </Link>
+      ) : null}
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {summaryQuery.isError ? (

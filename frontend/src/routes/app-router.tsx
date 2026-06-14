@@ -37,6 +37,9 @@ const MembershipSchedulePage = lazy(() =>
 const ReportsPage = lazy(() =>
   import("@/pages/reports-page").then((m) => ({ default: m.ReportsPage })),
 );
+const RemindersPage = lazy(() =>
+  import("@/pages/reminders-page").then((m) => ({ default: m.RemindersPage })),
+);
 
 // Member portal pages (customer-facing).
 const PortalDashboardPage = lazy(() =>
@@ -75,6 +78,7 @@ const router = createBrowserRouter([
           { path: "collections", element: <CollectionsPage /> },
           { path: "collections/customers/:id", element: <CustomerCollectionsPage /> },
           { path: "collections/memberships/:id", element: <MembershipSchedulePage /> },
+          { path: "reminders", element: <RemindersPage /> },
           { path: "reports", element: <ReportsPage /> },
         ],
       },
